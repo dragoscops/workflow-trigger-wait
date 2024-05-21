@@ -1,17 +1,17 @@
 /* eslint-disable max-lines-per-function */
 import * as core from '@actions/core';
-import axios from 'axios';
+import axios, {AxiosRequestConfig} from 'axios';
 import parseDuration from 'parse-duration';
 
-async function run(): Promise<void> {
+export default async function run(): Promise<void> {
   try {
     const githubToken = core.getInput('github_token');
     const repo = core.getInput('repo');
     const workflowId = core.getInput('workflow_id');
     const ref = core.getInput('ref');
     const inputs = JSON.parse(core.getInput('inputs') || '{}');
-    const waitInterval = parseDuration(core.getInput('wait_interval') || '1h', 'ms') || 60 * 60 * 1000;
-    const timeout = parseDuration(core.getInput('timeout') || '10s', 'ms') || 10 * 1000;
+    const waitInterval = parseDuration(core.getInput('wait_interval') || '10s', 'ms') || 10 * 1000;
+    const timeout = parseDuration(core.getInput('timeout') || '1h', 'ms') || 60 * 60 * 1000;
     const action = core.getInput('action');
     let runId = core.getInput('run_id');
 
@@ -29,7 +29,7 @@ async function run(): Promise<void> {
       if (!runId) {
         throw new Error(`run_id is required for action: wait-only`);
       }
-      await waitForWorkflows(parseInt(runId), repo, waitInterval, timeout, githubToken);
+      await waitForWorkflow(repo, parseInt(runId), waitInterval, timeout, githubToken);
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
@@ -37,7 +37,7 @@ async function run(): Promise<void> {
   }
 }
 
-async function triggerWorkflow(
+export async function triggerWorkflow(
   repo: string,
   workflowId: string,
   ref: string,
@@ -45,22 +45,17 @@ async function triggerWorkflow(
   githubToken: string,
 ): Promise<string> {
   if (!workflowId || !repo) {
-    throw new Error(`Invalid workflowId or repo to trigger: ${repo} / ${workflowId}`);
+    throw new Error(`Invalid workflowId or repo: ${repo} / ${workflowId}`);
   }
 
   const [owner, repoName] = repo.split('/');
   const response = await axios.post(
-    `https://api.github.com/repos/${owner}/${repoName}/actions/workflows/${workflowId}/dispatches`,
+    getTriggerWorkflowUrl(owner, repoName, workflowId),
     {
       ref,
       inputs,
     },
-    {
-      headers: {
-        Authorization: `token ${githubToken}`,
-        Accept: 'application/vnd.github.v3+json',
-      },
-    },
+    buildAxiosOptions(githubToken),
   );
 
   core.info(`Triggered workflow: ${workflowId} for ${repo} on ref ${ref}`);
@@ -69,8 +64,9 @@ async function triggerWorkflow(
     throw new Error(`Failed to trigger workflow: ${response.statusText}`);
   }
 
-  // Extracting the run_id from the response
-  const runId = response.data.id;
+  // Since GitHub's API for dispatching a workflow does not return run_id, this part will need to be adjusted.
+  // Here, we're assuming a way to obtain the run_id after triggering, which needs actual implementation.
+  const runId = await determineWorkflowRunId(owner, repoName, ref, githubToken);
   core.setOutput('run_id', runId.toString());
 
   core.info(`Workflow run ID: ${runId}`);
@@ -78,27 +74,59 @@ async function triggerWorkflow(
   return runId;
 }
 
-async function waitForWorkflows(
-  runId: number,
+export function getTriggerWorkflowUrl(owner: string, repoName: string, workflowId: string) {
+  return `https://api.github.com/repos/${owner}/${repoName}/actions/workflows/${workflowId}/dispatches`;
+}
+
+export async function determineWorkflowRunId(
+  owner: string,
+  repoName: string,
+  ref: string,
+  githubToken: string,
+): Promise<string> {
+  // Implement logic to fetch the most recent workflow run id based on the ref
+  // Placeholder implementation, please replace with actual logic
+  const response = await axios.get(getWorkflowRunIdUrl(owner, repoName), buildAxiosOptions(githubToken));
+
+  const runs = response.data.workflow_runs;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const run = runs.find((r: any) => r.head_branch === ref && r.status !== 'completed');
+  if (!run) {
+    throw new Error(`No running workflow found for ref ${ref}`);
+  }
+
+  return run.id.toString();
+}
+
+export function getWorkflowRunIdUrl(owner: string, repoName: string) {
+  return `https://api.github.com/repos/${owner}/${repoName}/actions/runs`;
+}
+
+export function buildAxiosOptions(githubToken: string): AxiosRequestConfig {
+  return {
+    headers: {
+      Authorization: `token ${githubToken}`,
+      Accept: 'application/vnd.github.v3+json',
+    },
+  };
+}
+
+export async function waitForWorkflow(
   repo: string,
+  runId: number,
   interval: number,
   timeout: number,
   githubToken: string,
 ): Promise<void> {
   if (!runId) {
-    throw new Error(`Invalid runId to wait for: ${runId}`);
+    throw new Error(`Invalid runId: ${runId}`);
   }
 
   const [owner, repoName] = repo.split('/');
   const startTime = Date.now();
 
-  while (Date.now() - startTime <= timeout + 1000) {
-    const response = await axios.get(`https://api.github.com/repos/${owner}/${repoName}/actions/runs/${runId}`, {
-      headers: {
-        Authorization: `token ${githubToken}`,
-        Accept: 'application/vnd.github.v3+json',
-      },
-    });
+  while (Date.now() - startTime <= timeout) {
+    const response = await axios.get(getWorkflowStatusUrl(owner, repoName, runId), buildAxiosOptions(githubToken));
 
     const run = response.data;
     const status = run.status;
@@ -112,13 +140,15 @@ async function waitForWorkflows(
       throw new Error(`Workflow run ${runId} failed with conclusion: ${conclusion}`);
     }
 
-    if (Date.now() - startTime > timeout) {
-      throw new Error(`Timeout waiting for workflow run ${runId} to complete.`);
-    }
-
     core.info(`Workflow run ${runId} is in status: ${status}. Waiting for ${interval / 1000} seconds...`);
     await new Promise((resolve) => setTimeout(resolve, interval));
   }
+
+  throw new Error(`Timeout waiting for workflow run ${runId} to complete.`);
+}
+
+export function getWorkflowStatusUrl(owner: string, repoName: string, runId: number) {
+  return `https://api.github.com/repos/${owner}/${repoName}/actions/runs/${runId}`;
 }
 
 run();

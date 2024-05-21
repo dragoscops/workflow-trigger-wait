@@ -5,6 +5,6 @@
     "target": "ES2022",
     "module": "CommonJS",
 
-    "outDir": "./dist/node-cjs"
+    "outDir": "./dist"
   }
 }

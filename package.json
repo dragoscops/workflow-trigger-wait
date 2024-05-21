@@ -9,6 +9,7 @@
     "@types/node": "^20.12.11",
     "@typescript-eslint/eslint-plugin": "^7.9.0",
     "@typescript-eslint/parser": "^7.9.0",
+    "axios-mock-adapter": "^1.22.0",
     "core-js": "^3.37.0",
     "cross-env": "^7.0.3",
     "dependency-cruiser": "^16.3.2",
@@ -55,27 +56,18 @@
     "jscpd:html": "npm run jscpd -- --reporters html",
     "jscpd": "jscpd ./src --blame",
     "license-check": "npx license-checker --production --json --failOn=\"AGPL AGPL 1.0; AGPL 3.0; CDDL or GPLv2 with exceptions; CNRI Python GPL Compatible; Eclipse 1.0; Eclipse 2.0; GPL; GPL 1.0; GPL 2.0; GPL 2.0 Autoconf; GPL 2.0 Bison; GPL 2.0 Classpath; GPL 2.0 Font; GPL 2.0 GCC; GPL 3.0; GPL 3.0 Autoconf; GPL 3.0 GCC; GPLv2 with XebiaLabs FLOSS License Exception; LGPL; LGPL 2.0; LGPL 2.1; LGPL 3.0; Suspected Eclipse 1.0; Suspected Eclipse 2.0\"",
-    "lint:eslint": "eslint ./{src,test}/**/*.ts --fix",
-    "lint:oxlint": "oxlint --jest-plugin --deny-warnings ./{src,test}/**/*.ts",
+    "lint:eslint": "eslint ./src/**/*.ts --fix",
+    "lint:oxlint": "oxlint --jest-plugin --deny-warnings ./src/**/*.ts",
     "lint": "run-s lint:*",
     "prepare": "husky",
-    "prettier": "prettier ./{src,test*}/**/*.ts --write",
+    "prettier": "prettier ./src/**/*.ts --write",
     "release:release-it": "release-it --ci --no-npm.publish",
     "release:release-please": "release-please",
     "release": "run-s release:*",
     "test:watch": "npm run test -- --watch",
     "test": "cross-env NODE_ENV=test  NO_API_DOC=1 jest --coverage --runInBand --verbose"
   },
-  "exports": {
-    ".": {
-      "browser": "./dist/browser/index.js",
-      "worker": "./dist/browser/index.js",
-      "bun": "./dist/browser/index.js",
-      "require": "./dist/node/node-cjs/index.js",
-      "import": "./dist/node/node-esm/index.js"
-    }
-  },
-  "main": "dist/node-cjs/index.js",
+  "main": "dist/index.js",
   "importSort": {
     ".js, .jsx": {
       "parser": "babylon",
