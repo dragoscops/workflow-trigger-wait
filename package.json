@@ -45,7 +45,6 @@
   "scripts": {
     "audit-modules": "npm audit",
     "build:node-cjs": "tsc -p ./tsconfig.cjs.json",
-    "build:types": "tsc -p ./tsconfig.types.json",
     "build": "run-s clean build:*",
     "ca:lint": "run-s lint prettier",
     "ca:quality": "run-s jscpd depcruise",
