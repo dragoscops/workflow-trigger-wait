@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    // configured build for CJS
+    "target": "ES2022",
+    "module": "CommonJS",
+
+    "outDir": "./dist/node-cjs"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "language": "ts",
+  "targets": [
+    "browser",
+    "bun",
+    "node-cjs",
+    "node-esm"
+  ],
+  "buildTool": "tsc"
+}

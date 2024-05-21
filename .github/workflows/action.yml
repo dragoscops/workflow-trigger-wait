@@ -1,0 +1,38 @@
+name: 'Trigger and Wait for Workflows'
+description: 'Triggers one or more workflows in a different repository and waits for them to end'
+inputs:
+  github_token:
+    description: 'GitHub token'
+    required: true
+  repo:
+    description: 'Repository to trigger workflows in (format: owner/repo)'
+    required: true
+  workflow_id:
+    description: 'ID or filename of the workflow to trigger'
+    required: true
+  ref:
+    description: 'Git reference to use for triggering the workflow'
+    required: true
+  inputs:
+    description: 'JSON string of inputs to pass to the workflow'
+    required: false
+  wait_interval:
+    description: 'Interval in seconds to wait between polling workflow status'
+    required: false
+    default: '10s'
+  timeout:
+    description: 'Maximum time to wait for the workflow to complete'
+    required: false
+    default: '1h'
+  action:
+    description: 'Action to perform: trigger-and-wait, trigger-only, wait-only'
+    required: false
+    default: 'trigger-and-wait'
+    type: string
+  run_id:
+    description: 'Run ID of the workflow to wait for (required for wait-only action)'
+    required: false
+    type: string
+runs:
+  using: 'node18'
+  main: 'dist/index.js'
