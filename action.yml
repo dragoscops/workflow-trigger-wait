@@ -6,7 +6,7 @@ inputs:
     required: true
   repo:
     description: "Repository to trigger workflows in (format: owner/repo)"
-    required: true
+    required: false
   workflow_id:
     description: "ID or filename of the workflow to trigger"
     required: false
