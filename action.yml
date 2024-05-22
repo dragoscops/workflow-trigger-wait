@@ -9,7 +9,7 @@ inputs:
     required: true
   workflow_id:
     description: "ID or filename of the workflow to trigger"
-    required: true
+    required: false
   ref:
     description: "Git reference to use for triggering the workflow"
     required: false
@@ -17,18 +17,20 @@ inputs:
   inputs:
     description: "JSON string of inputs to pass to the workflow"
     required: false
+    default: |
+      {}
   wait_interval:
     description: "Interval in seconds to wait between polling workflow status"
     required: false
-    default: "10s"
+    default: 10s
   timeout:
     description: "Maximum time to wait for the workflow to complete"
     required: false
-    default: "1h"
+    default: 1h
   action:
     description: "Action to perform: trigger-and-wait, trigger-only, wait-only"
     required: false
-    default: "trigger-and-wait"
+    default: trigger-and-wait
   run_id:
     description: "Run ID of the workflow to wait for (required for wait-only action)"
     required: false
