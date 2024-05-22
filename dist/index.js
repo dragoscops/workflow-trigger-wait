@@ -42,6 +42,9 @@ async function triggerWorkflow(repo, workflowId, ref, inputs, githubToken) {
     const [owner, repoName] = repo.split('/');
     core.info(`Calling ${getTriggerWorkflowUrl(owner, repoName, workflowId)}`);
     const response = await axios_1.default.post(getTriggerWorkflowUrl(owner, repoName, workflowId), {
+        owner,
+        repo: repoName,
+        workflow_id: workflowId,
         ref,
         inputs,
     }, buildAxiosOptions(githubToken));
@@ -78,6 +81,7 @@ function buildAxiosOptions(githubToken) {
         headers: {
             Authorization: `token ${githubToken}`,
             Accept: 'application/vnd.github.v3+json',
+            'X-GitHub-Api-Version': '2022-11-28',
         },
     };
 }

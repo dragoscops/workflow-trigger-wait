@@ -55,6 +55,9 @@ export async function triggerWorkflow(
   const response = await axios.post(
     getTriggerWorkflowUrl(owner, repoName, workflowId),
     {
+      owner,
+      repo: repoName,
+      workflow_id: workflowId,
       ref,
       inputs,
     },
@@ -110,6 +113,7 @@ export function buildAxiosOptions(githubToken: string): AxiosRequestConfig {
     headers: {
       Authorization: `token ${githubToken}`,
       Accept: 'application/vnd.github.v3+json',
+      'X-GitHub-Api-Version': '2022-11-28',
     },
   };
 }
