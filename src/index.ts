@@ -33,6 +33,7 @@ export default async function run(): Promise<void> {
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
+    core.error(error);
     core.setFailed(`Action failed with error: ${error.message}`);
   }
 }
