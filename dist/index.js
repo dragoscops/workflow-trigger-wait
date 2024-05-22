@@ -49,10 +49,20 @@ async function triggerWorkflow(repo, workflowId, ref, inputs, githubToken) {
     if (response.status !== 204) {
         throw new Error(`Failed to trigger workflow: ${response.statusText}`);
     }
-    const runId = await determineWorkflowRunId(owner, repoName, ref, githubToken);
-    core.setOutput('run_id', runId.toString());
-    core.info(`Workflow run ID: ${runId}`);
-    return runId;
+    let runId = '';
+    const pollingInterval = 5000;
+    const maxPollingAttempts = 12;
+    for (let attempt = 1; attempt <= maxPollingAttempts; attempt++) {
+        core.info(`Polling attempt ${attempt} to get run ID...`);
+        runId = await determineWorkflowRunId(owner, repoName, ref, githubToken);
+        if (runId) {
+            core.info(`Workflow run ID: ${runId}`);
+            core.setOutput('run_id', runId);
+            return runId;
+        }
+        await new Promise((resolve) => setTimeout(resolve, pollingInterval));
+    }
+    throw new Error('Failed to get workflow run ID after multiple polling attempts');
 }
 exports.triggerWorkflow = triggerWorkflow;
 function getTriggerWorkflowUrl(owner, repoName, workflowId) {

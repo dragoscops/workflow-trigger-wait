@@ -69,12 +69,24 @@ export async function triggerWorkflow(
 
   // Since GitHub's API for dispatching a workflow does not return run_id, this part will need to be adjusted.
   // Here, we're assuming a way to obtain the run_id after triggering, which needs actual implementation.
-  const runId = await determineWorkflowRunId(owner, repoName, ref, githubToken);
-  core.setOutput('run_id', runId.toString());
+  let runId = '';
+  const pollingInterval = 5000; // 5 seconds
+  const maxPollingAttempts = 12; // 1 minute
 
-  core.info(`Workflow run ID: ${runId}`);
+  for (let attempt = 1; attempt <= maxPollingAttempts; attempt++) {
+    core.info(`Polling attempt ${attempt} to get run ID...`);
+    runId = await determineWorkflowRunId(owner, repoName, ref, githubToken);
 
-  return runId;
+    if (runId) {
+      core.info(`Workflow run ID: ${runId}`);
+      core.setOutput('run_id', runId);
+      return runId;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, pollingInterval));
+  }
+
+  throw new Error('Failed to get workflow run ID after multiple polling attempts');
 }
 
 export function getTriggerWorkflowUrl(owner: string, repoName: string, workflowId: string) {
