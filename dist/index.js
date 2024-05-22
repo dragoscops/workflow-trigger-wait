@@ -74,7 +74,7 @@ async function determineWorkflowRunId(owner, repoName, ref, githubToken) {
     const runs = response.data.workflow_runs;
     const run = runs.find((r) => r.head_branch === ref && r.status !== 'completed');
     if (!run) {
-        throw new Error(`No running workflow found for ref ${ref}`);
+        return '';
     }
     return run.id.toString();
 }

@@ -107,7 +107,7 @@ export async function determineWorkflowRunId(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const run = runs.find((r: any) => r.head_branch === ref && r.status !== 'completed');
   if (!run) {
-    throw new Error(`No running workflow found for ref ${ref}`);
+    return '';
   }
 
   return run.id.toString();
