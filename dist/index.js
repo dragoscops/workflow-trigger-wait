@@ -30,7 +30,7 @@ async function run() {
         }
     }
     catch (error) {
-        core.error(error);
+        console.log(error);
         core.setFailed(`Action failed with error: ${error.message}`);
     }
 }
