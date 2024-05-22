@@ -40,6 +40,7 @@ async function triggerWorkflow(repo, workflowId, ref, inputs, githubToken) {
         throw new Error(`Invalid workflowId or repo: ${repo} / ${workflowId}`);
     }
     const [owner, repoName] = repo.split('/');
+    core.info(`Calling ${getTriggerWorkflowUrl(owner, repoName, workflowId)}`);
     const response = await axios_1.default.post(getTriggerWorkflowUrl(owner, repoName, workflowId), {
         ref,
         inputs,

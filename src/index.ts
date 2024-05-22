@@ -50,6 +50,8 @@ export async function triggerWorkflow(
   }
 
   const [owner, repoName] = repo.split('/');
+  core.info(`Calling ${getTriggerWorkflowUrl(owner, repoName, workflowId)}`);
+
   const response = await axios.post(
     getTriggerWorkflowUrl(owner, repoName, workflowId),
     {
