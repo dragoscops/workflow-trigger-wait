@@ -8,7 +8,7 @@ export default async function run(): Promise<void> {
     const githubToken = core.getInput('github_token');
     const repo = core.getInput('repo');
     const workflowId = core.getInput('workflow_id');
-    const ref = core.getInput('ref');
+    const ref = core.getInput('ref') || 'main';
     const inputs = JSON.parse(core.getInput('inputs') || '{}');
     const waitInterval = parseDuration(core.getInput('wait_interval') || '10s', 'ms') || 10 * 1000;
     const timeout = parseDuration(core.getInput('timeout') || '1h', 'ms') || 60 * 60 * 1000;

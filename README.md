@@ -27,10 +27,10 @@ This GitHub Action allows you to trigger one or more workflows from a different 
 
 ### Inputs
 
-- `github_token`: The GitHub token for authentication. Required.
+- `github_token`: **Required** - The GitHub token for authentication. 
 - `repo`: The target repository in the format `owner/repo`.
 - `workflow_id`: The workflow file name or ID to trigger.
-- `ref`: The git reference for the workflow (branch, tag, or commit SHA). Required.
+- `ref`: The git reference for the workflow (branch, tag, or commit SHA).
 - `inputs`: JSON string of input parameters for the workflow. Optional.
 - `wait_interval`: Interval between status checks when waiting for the workflow to complete. Defaults to `10s`.
 - `timeout`: Maximum time to wait for the workflow to complete. Defaults to `1h`.

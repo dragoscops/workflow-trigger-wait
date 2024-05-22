@@ -12,7 +12,8 @@ inputs:
     required: true
   ref:
     description: "Git reference to use for triggering the workflow"
-    required: true
+    required: false
+    default: main
   inputs:
     description: "JSON string of inputs to pass to the workflow"
     required: false
