@@ -115,7 +115,7 @@ async function waitForWorkflow(repo, runId, interval, timeout, githubToken, noTh
             }
             else {
                 core.setOutput('run_id', runId);
-                core.setOutput('W', conclusion);
+                core.setOutput('run_conclusion', conclusion);
                 return;
             }
         }

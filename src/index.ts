@@ -160,7 +160,7 @@ export async function waitForWorkflow(
         throw new Error(`Workflow run ${runId} failed with conclusion: ${conclusion}`);
       } else {
         core.setOutput('run_id', runId);
-        core.setOutput('W', conclusion);
+        core.setOutput('run_conclusion', conclusion);
         return;
       }
     }
