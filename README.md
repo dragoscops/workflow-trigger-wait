@@ -36,6 +36,7 @@ This GitHub Action allows you to trigger one or more workflows from a different 
 - `timeout`: Maximum time to wait for the workflow to complete. Defaults to `1h`.
 - `action`: The action mode: `trigger-and-wait`, `trigger-only`, or `wait-only`. Defaults to `trigger-and-wait`.
 - `run_id`: The run ID of the workflow to wait for. Required if `action` is `wait-only`.
+- `no_throw`: If set to `yes` or `true`, will not throw errors when waiting for a workflow, instead will print the error message to `run_conclusion` output.
 
 ### Example Workflow
 

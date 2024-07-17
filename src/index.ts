@@ -13,6 +13,7 @@ export default async function run(): Promise<void> {
     const waitInterval = parseDuration(core.getInput('wait_interval') || '10s', 'ms') || 10 * 1000;
     const timeout = parseDuration(core.getInput('timeout') || '1h', 'ms') || 60 * 60 * 1000;
     const action = core.getInput('action');
+    const noThrow = core.getInput('no_throw');
     let runId = core.getInput('run_id');
 
     const allActions = ['trigger-and-wait', 'trigger-only', 'wait-only'];
@@ -29,7 +30,7 @@ export default async function run(): Promise<void> {
       if (!runId) {
         throw new Error(`run_id is required for action: wait-only`);
       }
-      await waitForWorkflow(repo, parseInt(runId), waitInterval, timeout, githubToken);
+      await waitForWorkflow(repo, parseInt(runId), waitInterval, timeout, githubToken, noThrow);
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
@@ -127,12 +128,14 @@ export function buildAxiosOptions(githubToken: string): AxiosRequestConfig {
   };
 }
 
+// eslint-disable-next-line max-params
 export async function waitForWorkflow(
   repo: string,
   runId: number,
   interval: number,
   timeout: number,
   githubToken: string,
+  noThrow: string,
 ): Promise<void> {
   if (!runId) {
     throw new Error(`Invalid runId: ${runId}`);
@@ -153,14 +156,25 @@ export async function waitForWorkflow(
         core.info(`Workflow run ${runId} completed successfully.`);
         return;
       }
-      throw new Error(`Workflow run ${runId} failed with conclusion: ${conclusion}`);
+      if (!['true', 'yes'].includes(noThrow.toLowerCase())) {
+        throw new Error(`Workflow run ${runId} failed with conclusion: ${conclusion}`);
+      } else {
+        core.setOutput('run_id', runId);
+        core.setOutput('W', conclusion);
+        return;
+      }
     }
 
     core.info(`Workflow run ${runId} is in status: ${status}. Waiting for ${interval / 1000} seconds...`);
     await new Promise((resolve) => setTimeout(resolve, interval));
   }
 
-  throw new Error(`Timeout waiting for workflow run ${runId} to complete.`);
+  if (!['true', 'yes'].includes(noThrow.toLowerCase())) {
+    throw new Error(`Timeout waiting for workflow run ${runId} to complete.`);
+  } else {
+    core.setOutput('run_id', runId);
+    core.setOutput('run_conclusion', 'timeout');
+  }
 }
 
 export function getWorkflowStatusUrl(owner: string, repoName: string, runId: number) {

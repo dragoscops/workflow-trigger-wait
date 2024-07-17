@@ -90,7 +90,7 @@ describe('GitHub Action', () => {
     });
 
     it('waitForWorkflow(...) should wait for the workflow to complete', async () => {
-      await waitForWorkflow(repoMock, parseInt(runIdMock), 10000, 100000, githubTokenMock);
+      await waitForWorkflow(repoMock, parseInt(runIdMock), 10000, 100000, githubTokenMock, '');
 
       expect(mockSetFailed).not.toHaveBeenCalled();
     });

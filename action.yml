@@ -34,6 +34,12 @@ inputs:
   run_id:
     description: "Run ID of the workflow to wait for (required for wait-only action)"
     required: false
+    default: trigger-and-wait
+  no_throw:
+    description: |
+      If set to 'yes' or 'true', will not throw errors when waiting for a workflow,
+      instead will print the error message to 'run_conclusion' output.
+    required: false
 runs:
   using: "node20"
   main: "dist/index.js"
