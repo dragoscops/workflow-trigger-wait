@@ -81,6 +81,7 @@ export async function triggerWorkflow(
     if (runId) {
       core.info(`Workflow run ID: ${runId}`);
       core.setOutput('run_id', runId);
+      core.info(`For more info, visit https://github.com/${repo}/actions/runs/${runId}`);
       return runId;
     }
 
@@ -156,9 +157,11 @@ export async function waitForWorkflow(
         core.info(`Workflow run ${runId} completed successfully.`);
         return;
       }
+
       if (!['true', 'yes'].includes(noThrow.toLowerCase())) {
         throw new Error(`Workflow run ${runId} failed with conclusion: ${conclusion}`);
       } else {
+        core.error(`Workflow run ${runId} failed with conclusion: ${conclusion}`);
         core.setOutput('run_id', runId);
         core.setOutput('run_conclusion', conclusion);
         return;

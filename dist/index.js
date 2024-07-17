@@ -59,6 +59,7 @@ async function triggerWorkflow(repo, workflowId, ref, inputs, githubToken) {
         if (runId) {
             core.info(`Workflow run ID: ${runId}`);
             core.setOutput('run_id', runId);
+            core.info(`For more info, visit https://github.com/${repo}/actions/runs/${runId}`);
             return runId;
         }
         await new Promise((resolve) => setTimeout(resolve, pollingInterval));
@@ -114,6 +115,7 @@ async function waitForWorkflow(repo, runId, interval, timeout, githubToken, noTh
                 throw new Error(`Workflow run ${runId} failed with conclusion: ${conclusion}`);
             }
             else {
+                core.error(`Workflow run ${runId} failed with conclusion: ${conclusion}`);
                 core.setOutput('run_id', runId);
                 core.setOutput('run_conclusion', conclusion);
                 return;
