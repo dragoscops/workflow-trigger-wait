@@ -99,6 +99,8 @@ async function waitForWorkflow(repo, runId, interval, timeout, githubToken, noTh
     if (!runId) {
         throw new Error(`Invalid runId: ${runId}`);
     }
+    core.info(`Waiting for workflow ${runId}`);
+    core.info(`For more info, visit https://github.com/${repo}/actions/runs/${runId}`);
     const [owner, repoName] = repo.split('/');
     const startTime = Date.now();
     while (Date.now() - startTime <= timeout) {
