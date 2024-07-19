@@ -58,14 +58,14 @@ jobs:
       - name: Trigger and Wait for Workflow
         uses: clbt-5f49f15a/wait-for-workflow@v1
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          repo: "owner/target-repo"
-          workflow_id: "target-workflow.yml"
-          ref: "main"
-          inputs: '{"exampleInput": "exampleValue"}'
-          wait_interval: "30s"
-          timeout: "20m"
           action: "trigger-and-wait"
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          inputs: '{"exampleInput": "exampleValue"}'
+          ref: "main"
+          repo: "owner/target-repo"
+          timeout: "20m"
+          wait_interval: "30s"
+          workflow_id: "target-workflow.yml"
 ```
 
 #### Trigger and Wait Lager
@@ -88,23 +88,24 @@ jobs:
         id: trigger
         uses: clbt-5f49f15a/wait-for-workflow@v1
         with:
+          action: 'trigger-only'
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          inputs: '{"param1": "value1"}'
+          ref: 'main'
           repo: 'owner/repository'
           workflow_id: 'workflow.yml'
-          ref: 'main'
-          inputs: '{"param1": "value1"}'
-          action: 'trigger-only'
 
       # other actions can be performed here
 
       - name: Wait for Workflow
         uses: clbt-5f49f15a/wait-for-workflow@v1
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          run_id: ${{ steps.trigger.outputs.run_id }}
-          wait_interval: '30s'
-          timeout: '2h'
           action: 'wait-only'
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          repo: 'owner/repository'
+          run_id: ${{ steps.trigger.outputs.run_id }}
+          timeout: '2h'
+          wait_interval: '30s'
 
 ```
 
