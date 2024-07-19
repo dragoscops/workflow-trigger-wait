@@ -104,7 +104,8 @@ async function waitForWorkflow(repo, runId, interval, timeout, githubToken, noTh
     const [owner, repoName] = repo.split('/');
     const startTime = Date.now();
     while (Date.now() - startTime <= timeout) {
-        const response = await axios_1.default.get(getWorkflowStatusUrl(owner, repoName, runId), buildAxiosOptions(githubToken));
+        const url = getWorkflowStatusUrl(owner, repoName, runId);
+        const response = await axios_1.default.get(url, buildAxiosOptions(githubToken));
         const run = response.data;
         const status = run.status;
         const conclusion = run.conclusion;
@@ -136,7 +137,6 @@ async function waitForWorkflow(repo, runId, interval, timeout, githubToken, noTh
 }
 exports.waitForWorkflow = waitForWorkflow;
 function getWorkflowStatusUrl(owner, repoName, runId) {
-    core.info(`Interrogating https://api.github.com/repos/${owner}/${repoName}/actions/runs/${runId}`);
     return `https://api.github.com/repos/${owner}/${repoName}/actions/runs/${runId}`;
 }
 exports.getWorkflowStatusUrl = getWorkflowStatusUrl;
