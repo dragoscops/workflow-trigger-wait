@@ -183,6 +183,7 @@ export async function waitForWorkflow(
 }
 
 export function getWorkflowStatusUrl(owner: string, repoName: string, runId: number) {
+  core.info(`Interrogating https://api.github.com/repos/${owner}/${repoName}/actions/runs/${runId}`);
   return `https://api.github.com/repos/${owner}/${repoName}/actions/runs/${runId}`;
 }
 

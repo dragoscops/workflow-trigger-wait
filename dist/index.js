@@ -136,6 +136,7 @@ async function waitForWorkflow(repo, runId, interval, timeout, githubToken, noTh
 }
 exports.waitForWorkflow = waitForWorkflow;
 function getWorkflowStatusUrl(owner, repoName, runId) {
+    core.info(`Interrogating https://api.github.com/repos/${owner}/${repoName}/actions/runs/${runId}`);
     return `https://api.github.com/repos/${owner}/${repoName}/actions/runs/${runId}`;
 }
 exports.getWorkflowStatusUrl = getWorkflowStatusUrl;
