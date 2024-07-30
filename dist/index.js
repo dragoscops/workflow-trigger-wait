@@ -55,7 +55,7 @@ async function triggerWorkflow(repo, workflowId, ref, inputs, githubToken) {
     const maxPollingAttempts = 12;
     for (let attempt = 1; attempt <= maxPollingAttempts; attempt++) {
         core.info(`Polling attempt ${attempt} to get run ID...`);
-        runId = await determineWorkflowRunId(owner, repoName, ref, githubToken);
+        runId = await determineWorkflowRunId(owner, repoName, ref, workflowId, githubToken);
         if (runId) {
             core.info(`Workflow run ID: ${runId}`);
             core.setOutput('run_id', runId);
@@ -71,10 +71,10 @@ function getTriggerWorkflowUrl(owner, repoName, workflowId) {
     return `https://api.github.com/repos/${owner}/${repoName}/actions/workflows/${workflowId}/dispatches`;
 }
 exports.getTriggerWorkflowUrl = getTriggerWorkflowUrl;
-async function determineWorkflowRunId(owner, repoName, ref, githubToken) {
+async function determineWorkflowRunId(owner, repoName, ref, workflowId, githubToken) {
     const response = await axios_1.default.get(getWorkflowRunIdUrl(owner, repoName), buildAxiosOptions(githubToken));
     const runs = response.data.workflow_runs;
-    const run = runs.find((r) => r.head_branch === ref && r.status !== 'completed');
+    const run = runs.find((r) => r.head_branch === ref && r.path.endsWith(workflowId) && r.status !== 'completed');
     if (!run) {
         return '';
     }

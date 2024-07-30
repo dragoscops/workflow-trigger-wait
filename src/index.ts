@@ -76,7 +76,7 @@ export async function triggerWorkflow(
 
   for (let attempt = 1; attempt <= maxPollingAttempts; attempt++) {
     core.info(`Polling attempt ${attempt} to get run ID...`);
-    runId = await determineWorkflowRunId(owner, repoName, ref, githubToken);
+    runId = await determineWorkflowRunId(owner, repoName, ref, workflowId, githubToken);
 
     if (runId) {
       core.info(`Workflow run ID: ${runId}`);
@@ -99,6 +99,7 @@ export async function determineWorkflowRunId(
   owner: string,
   repoName: string,
   ref: string,
+  workflowId: string,
   githubToken: string,
 ): Promise<string> {
   // Implement logic to fetch the most recent workflow run id based on the ref
@@ -107,7 +108,7 @@ export async function determineWorkflowRunId(
 
   const runs = response.data.workflow_runs;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const run = runs.find((r: any) => r.head_branch === ref && r.status !== 'completed');
+  const run = runs.find((r: any) => r.head_branch === ref && r.path.endsWith(workflowId) && r.status !== 'completed');
   if (!run) {
     return '';
   }

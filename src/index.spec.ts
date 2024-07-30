@@ -70,9 +70,11 @@ describe('GitHub Action', () => {
   describe('successful triggers', () => {
     beforeEach(() => {
       axiosMock.onPost(triggerWorkflowUrl).reply(204);
-      axiosMock
-        .onGet(workflowRunIdUrl)
-        .reply(200, {workflow_runs: [{id: runIdMock, status: 'in_progress', head_branch: refMock}]});
+      axiosMock.onGet(workflowRunIdUrl).reply(200, {
+        workflow_runs: [
+          {id: runIdMock, status: 'in_progress', path: `.github/workflows/${workflowIdMock}`, head_branch: refMock},
+        ],
+      });
       // Mock GitHub API responses
       axiosMock.onGet(workflowStatusUrl).reply(200, {
         status: 'completed',
