@@ -31,7 +31,7 @@ jobs:
       # Run the action with a test workflow
       - name: Run Test Action
         id: run-test
-        uses: ./ # Use the current action
+        uses: dragosops/workflow-trigger-wait@main
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           repo: ${{ github.repository }}
