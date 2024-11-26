@@ -3,7 +3,7 @@ import * as core from '@actions/core';
 import axios from 'axios';
 import * as MockAdapter from 'axios-mock-adapter';
 import run, {
-  triggerWorkflow,
+  createWorkflow,
   waitForWorkflow,
   getTriggerWorkflowUrl,
   getWorkflowRunIdUrl,
@@ -85,7 +85,13 @@ describe('GitHub Action', () => {
     });
 
     it('triggerWorkflow(...) should trigger the workflow', async () => {
-      const runId = await triggerWorkflow(repoMock, workflowIdMock, refMock, {}, githubTokenMock);
+      const runId = await createWorkflow({
+        repo: repoMock,
+        workflowId: workflowIdMock,
+        ref: refMock,
+        inputs: {},
+        githubToken: githubTokenMock,
+      });
 
       expect(runId).toEqual(runIdMock);
       expect(mockSetOutput).toHaveBeenCalledWith('run_id', runIdMock);
