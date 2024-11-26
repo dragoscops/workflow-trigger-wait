@@ -39,6 +39,7 @@ async function run() {
         core.setOutput('run_conclusion', conclusion);
         console.error(`Error: ${errorMessage(error)}`);
         console.error(`Run Conclusion: ${conclusion}`);
+        console.error(error);
         if (silentFail(options.noThrow)) {
             console.warn('Silent fail enabled. Suppressing action failure.');
         }
@@ -60,7 +61,6 @@ async function runAction(options) {
     if (!exports.actionTypes.includes(action)) {
         throw new InputError(`Invalid action: ${action}`);
     }
-    console.info(action, action.includes('trigger'), action.includes('wait'));
     if (action.includes('trigger')) {
         options.runId = await triggerWorkflow(options);
     }
