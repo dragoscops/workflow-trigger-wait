@@ -42,7 +42,7 @@ jobs:
           repo: ${{ github.repository }}
           workflow_id: "test-workflow.yml"
           ref: "main"
-          inputs: '{"Timeout": 5}'
+          inputs: '{"Timeout": "5"}'
           wait_interval: "10000"
           timeout: "60000"
           action: "trigger-and-wait"

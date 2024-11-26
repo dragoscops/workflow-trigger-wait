@@ -15,7 +15,13 @@ function silentFail(noThrow) {
 exports.silentFail = silentFail;
 function doDebug(options, ...values) {
     if (['true', 'yes'].includes((options.debug ?? 'no').toLowerCase())) {
-        console.info(`[DEBUG]`, ...values);
+        if (typeof values[0] === 'string') {
+            console.log(`::group::${values[0]}`);
+        }
+        console.log(...values);
+        if (typeof values[0] === 'string') {
+            console.log('::endgroup::');
+        }
     }
 }
 exports.doDebug = doDebug;

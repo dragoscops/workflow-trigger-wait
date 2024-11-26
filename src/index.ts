@@ -35,7 +35,13 @@ export function silentFail(noThrow: string): boolean {
 
 export function doDebug(options: Options, ...values: unknown[]) {
   if (['true', 'yes'].includes((options.debug ?? 'no').toLowerCase())) {
-    console.info(`[DEBUG]`, ...values);
+    if (typeof values[0] === 'string') {
+      console.log(`::group::${values[0]}`);
+    }
+    console.log(...values);
+    if (typeof values[0] === 'string') {
+      console.log('::endgroup::');
+    }
   }
 }
 
