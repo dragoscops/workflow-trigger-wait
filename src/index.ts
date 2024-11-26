@@ -80,8 +80,6 @@ export async function runAction(options: Options) {
     throw new InputError(`Invalid action: ${action}`);
   }
 
-  console.info(action, action.includes('trigger'), action.includes('wait'));
-
   if (action.includes('trigger')) {
     options.runId = await triggerWorkflow(options);
   }

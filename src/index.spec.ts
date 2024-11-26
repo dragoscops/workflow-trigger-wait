@@ -1,7 +1,9 @@
 /* eslint-disable max-len */
 /* eslint-disable max-lines-per-function */
 import axios from 'axios';
+import '@actions/core';
 import * as MockAdapter from 'axios-mock-adapter';
+
 import {
   ActionType,
   createWorkflow,
@@ -15,8 +17,19 @@ import {
   runAction,
 } from './index'; // Adjust the path to your project structure
 
-console.log = jest.fn();
+jest.mock('@actions/core', () => ({
+  getInput: jest.fn(),
+  setFailed: jest.fn(),
+  setOutput: jest.fn(),
+  info: jest.fn(),
+  debug: jest.fn(),
+  warning: jest.fn(),
+  error: jest.fn(),
+}));
+
 console.error = jest.fn();
+console.log = jest.fn();
+console.warn = jest.fn();
 
 const triggerAndWaitAction: ActionType = 'trigger-and-wait';
 const internalServerError = 'Internal Server Error';
