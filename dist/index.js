@@ -164,7 +164,7 @@ async function determineWorkflowRunId(options) {
             throw new DetermineWorkflowIdError(`Failed to get workflow run ID: ${errorMessage(error)}`, { cause: error });
         }
         if (runId) {
-            core.info(`Workflow run ID: `);
+            core.info(`Workflow run ID: ${runId}`);
             core.setOutput('run_id', runId);
             core.info(`For more info, visit ${getWorkflowDetailsIdUrl(options)}`);
             return runId;

@@ -85,7 +85,7 @@ jobs:
           timeout: "60000"
           action: "wait-only"
           debug: "yes"
-          run_id: "${{ steps.run-triger-only.outputs.run_id }}"
+          run_id: "${{ steps.run-trigger-only.outputs.run_id }}"
 
       - name: "[3] Verify Outputs"
         run: |

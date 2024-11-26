@@ -194,7 +194,7 @@ export async function determineWorkflowRunId(options: Options): Promise<string> 
     }
 
     if (runId) {
-      core.info(`Workflow run ID: `);
+      core.info(`Workflow run ID: ${runId}`);
       core.setOutput('run_id', runId);
       core.info(`For more info, visit ${getWorkflowDetailsIdUrl(options)}`);
       return runId;
