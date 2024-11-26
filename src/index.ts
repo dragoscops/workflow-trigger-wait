@@ -22,6 +22,7 @@ export type Options = {
     pollingInterval?: number;
     maxPollingAttempts?: number;
   };
+  debug?: string;
 };
 
 export function errorMessage(error: unknown): string {
@@ -30,6 +31,12 @@ export function errorMessage(error: unknown): string {
 
 export function silentFail(noThrow: string): boolean {
   return ['true', 'yes'].includes(noThrow.toLowerCase());
+}
+
+export function doDebug(options: Options, ...values: unknown[]) {
+  if (['true', 'yes'].includes((options.debug ?? 'no').toLowerCase())) {
+    console.info(`[DEBUG]`, ...values);
+  }
 }
 
 export async function sleep(interval = 1000): Promise<void> {
@@ -59,7 +66,7 @@ export default async function run(): Promise<void> {
     core.setOutput('run_conclusion', conclusion); // Always set the conclusion
     console.error(`Error: ${errorMessage(error)}`);
     console.error(`Run Conclusion: ${conclusion}`);
-    console.error(error);
+    doDebug(options, '[runAction]', error);
     if (silentFail(options.noThrow)) {
       console.warn('Silent fail enabled. Suppressing action failure.');
     } else {
@@ -111,6 +118,7 @@ export async function triggerWorkflow(options: Options): Promise<string> {
   try {
     await createWorkflow(options);
   } catch (error) {
+    doDebug(options, '[triggerWorkflow > createWorkflow]', error);
     throw new TriggerWorkflowError(`Failed to trigger workflow: ${errorMessage(error)}`, {cause: error});
   }
 
@@ -119,6 +127,7 @@ export async function triggerWorkflow(options: Options): Promise<string> {
   try {
     return determineWorkflowRunId(options);
   } catch (error) {
+    doDebug(options, '[triggerWorkflow > determineWorkflowRunId]', error);
     throw new TriggerWorkflowError(`Failed to read workflow id: ${errorMessage(error)}`, {cause: error});
   }
 }
@@ -146,10 +155,12 @@ export async function createWorkflow(options: Options): Promise<void> {
       },
       buildAxiosOptions(githubToken),
     );
+    doDebug(options, '[createWorkflow > axios.post]', workflowUrl, response);
     if (response.status !== 204) {
       throw new Error(response.statusText);
     }
   } catch (error) {
+    doDebug(options, '[createWorkflow > axios.post]', workflowUrl, error);
     throw new Error(`Failed to trigger workflow: ${errorMessage(error)}`);
   }
   core.info(`Called ${workflowUrl}@${ref}`);
@@ -171,6 +182,7 @@ export async function determineWorkflowRunId(options: Options): Promise<string> 
     try {
       runId = await determineWorkflowRunIdAttempt(options);
     } catch (error) {
+      doDebug(options, '[determineWorkflowRunId > determineWorkflowRunIdAttempt]', error);
       throw new DetermineWorkflowIdError(`Failed to get workflow run ID: ${errorMessage(error)}`, {cause: error});
     }
 
@@ -196,7 +208,9 @@ export async function determineWorkflowRunIdAttempt(options: Options): Promise<s
 
   // Implement logic to fetch the most recent workflow run id based on the ref
   // Placeholder implementation, please replace with actual logic
-  const response = await axios.get(getRunsListUrl(options), buildAxiosOptions(githubToken));
+  const runsListUrl = getRunsListUrl(options);
+  const response = await axios.get(runsListUrl, buildAxiosOptions(githubToken));
+  doDebug(options, '[determineWorkflowRunIdAttempt > axios.get]', getRunsListUrl, response);
 
   const runs = response?.data?.workflow_runs ?? [];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -253,8 +267,9 @@ export async function waitForWorkflow(options: Options): Promise<void> {
   while (Date.now() - startTime <= timeout) {
     try {
       response = await axios.get(workflowRunStatusUrl, buildAxiosOptions(githubToken));
+      doDebug(options, '[waitForWorkflow > axios.get]', workflowRunStatusUrl, response);
     } catch (error) {
-      console.log(error);
+      doDebug(options, '[waitForWorkflow > axios.get]', workflowRunStatusUrl, error);
       throw new WaitForWorkflowError('failure', `Workflow run ${runId} status request failed: ${errorMessage(error)}`, {
         cause: error,
       });

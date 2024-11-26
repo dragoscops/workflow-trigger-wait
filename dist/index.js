@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getWorkflowRunStatusUrl = exports.waitForWorkflow = exports.buildAxiosOptions = exports.getRunsListUrl = exports.determineWorkflowRunIdAttempt = exports.getWorkflowDetailsIdUrl = exports.determineWorkflowRunId = exports.createWorkflow = exports.CreateWorkflowError = exports.getWorkflowDispatchUrl = exports.triggerWorkflow = exports.TriggerWorkflowError = exports.InvalidWorkflowError = exports.runAction = exports.InputError = exports.GenericError = exports.sleep = exports.silentFail = exports.errorMessage = exports.actionTypes = void 0;
+exports.getWorkflowRunStatusUrl = exports.waitForWorkflow = exports.buildAxiosOptions = exports.getRunsListUrl = exports.determineWorkflowRunIdAttempt = exports.getWorkflowDetailsIdUrl = exports.determineWorkflowRunId = exports.createWorkflow = exports.CreateWorkflowError = exports.getWorkflowDispatchUrl = exports.triggerWorkflow = exports.TriggerWorkflowError = exports.InvalidWorkflowError = exports.runAction = exports.InputError = exports.GenericError = exports.sleep = exports.doDebug = exports.silentFail = exports.errorMessage = exports.actionTypes = void 0;
 const core = require("@actions/core");
 const axios_1 = require("axios");
 const parse_duration_1 = require("parse-duration");
@@ -13,6 +13,12 @@ function silentFail(noThrow) {
     return ['true', 'yes'].includes(noThrow.toLowerCase());
 }
 exports.silentFail = silentFail;
+function doDebug(options, ...values) {
+    if (['true', 'yes'].includes((options.debug ?? 'no').toLowerCase())) {
+        console.info(`[DEBUG]`, ...values);
+    }
+}
+exports.doDebug = doDebug;
 async function sleep(interval = 1000) {
     return new Promise((resolve) => setTimeout(resolve, interval));
 }
@@ -39,7 +45,7 @@ async function run() {
         core.setOutput('run_conclusion', conclusion);
         console.error(`Error: ${errorMessage(error)}`);
         console.error(`Run Conclusion: ${conclusion}`);
-        console.error(error);
+        doDebug(options, '[runAction]', error);
         if (silentFail(options.noThrow)) {
             console.warn('Silent fail enabled. Suppressing action failure.');
         }
@@ -89,12 +95,14 @@ async function triggerWorkflow(options) {
         await createWorkflow(options);
     }
     catch (error) {
+        doDebug(options, '[triggerWorkflow > createWorkflow]', error);
         throw new TriggerWorkflowError(`Failed to trigger workflow: ${errorMessage(error)}`, { cause: error });
     }
     try {
         return determineWorkflowRunId(options);
     }
     catch (error) {
+        doDebug(options, '[triggerWorkflow > determineWorkflowRunId]', error);
         throw new TriggerWorkflowError(`Failed to read workflow id: ${errorMessage(error)}`, { cause: error });
     }
 }
@@ -117,11 +125,13 @@ async function createWorkflow(options) {
             ref,
             inputs,
         }, buildAxiosOptions(githubToken));
+        doDebug(options, '[createWorkflow > axios.post]', workflowUrl, response);
         if (response.status !== 204) {
             throw new Error(response.statusText);
         }
     }
     catch (error) {
+        doDebug(options, '[createWorkflow > axios.post]', workflowUrl, error);
         throw new Error(`Failed to trigger workflow: ${errorMessage(error)}`);
     }
     core.info(`Called ${workflowUrl}@${ref}`);
@@ -143,6 +153,7 @@ async function determineWorkflowRunId(options) {
             runId = await determineWorkflowRunIdAttempt(options);
         }
         catch (error) {
+            doDebug(options, '[determineWorkflowRunId > determineWorkflowRunIdAttempt]', error);
             throw new DetermineWorkflowIdError(`Failed to get workflow run ID: ${errorMessage(error)}`, { cause: error });
         }
         if (runId) {
@@ -162,7 +173,9 @@ function getWorkflowDetailsIdUrl({ repo, runId }) {
 exports.getWorkflowDetailsIdUrl = getWorkflowDetailsIdUrl;
 async function determineWorkflowRunIdAttempt(options) {
     const { ref, workflowId, githubToken } = options;
-    const response = await axios_1.default.get(getRunsListUrl(options), buildAxiosOptions(githubToken));
+    const runsListUrl = getRunsListUrl(options);
+    const response = await axios_1.default.get(runsListUrl, buildAxiosOptions(githubToken));
+    doDebug(options, '[determineWorkflowRunIdAttempt > axios.get]', getRunsListUrl, response);
     const runs = response?.data?.workflow_runs ?? [];
     const run = runs.find((r) => r.head_branch === ref && r.path.endsWith(workflowId) && r.status !== 'completed');
     if (!run) {
@@ -208,9 +221,10 @@ async function waitForWorkflow(options) {
     while (Date.now() - startTime <= timeout) {
         try {
             response = await axios_1.default.get(workflowRunStatusUrl, buildAxiosOptions(githubToken));
+            doDebug(options, '[waitForWorkflow > axios.get]', workflowRunStatusUrl, response);
         }
         catch (error) {
-            console.log(error);
+            doDebug(options, '[waitForWorkflow > axios.get]', workflowRunStatusUrl, error);
             throw new WaitForWorkflowError('failure', `Workflow run ${runId} status request failed: ${errorMessage(error)}`, {
                 cause: error,
             });

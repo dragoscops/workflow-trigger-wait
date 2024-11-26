@@ -46,6 +46,7 @@ jobs:
           wait_interval: "10000"
           timeout: "60000"
           action: "trigger-and-wait"
+          debug: "yes"
 
       # Verify the output
       - name: Verify Outputs
