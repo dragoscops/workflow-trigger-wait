@@ -33,9 +33,8 @@ jobs:
     # needs:
     #   - unit-test-action
     steps:
-      # Run the action with a test workflow
-      - name: Run Test Action
-        id: run-test
+      - name: "[1] Run Simple Trigger And Wait"
+        id: run-simple-trigger-and-wait
         uses: dragoscops/workflow-trigger-wait@main
         with:
           github_token: ${{ secrets.GH_TOKEN }}
@@ -48,7 +47,47 @@ jobs:
           action: "trigger-and-wait"
           debug: "yes"
 
-      # Verify the output
-      - name: Verify Outputs
+      - name: "[1] Verify Outputs"
         run: |
-          echo "Run Conclusion: ${{ steps.run-test.outputs.run_conclusion }}"
+          echo "Run Conclusion: ${{ steps.run-simple-trigger-and-wait.outputs.run_conclusion }}"
+          if [[ "${{ steps.run-simple-trigger-and-wait.outputs.run_conclusion }}" != "success" ]]; then exit 1; fi
+
+      - name: "[2] Run Trigger Only"
+        id: run-trigger-only
+        uses: dragoscops/workflow-trigger-wait@main
+        with:
+          github_token: ${{ secrets.GH_TOKEN }}
+          repo: ${{ github.repository }}
+          workflow_id: "test-workflow.yml"
+          ref: "main"
+          inputs: '{"Timeout": "5"}'
+          wait_interval: "10000"
+          timeout: "60000"
+          action: "trigger-only"
+          debug: "yes"
+
+      - name: "[2] Verify Outputs"
+        run: |
+          echo "Run Id: ${{ steps.run-trigger-only.outputs.run_id }}"
+          echo "Run Conclusion: ${{ steps.run-trigger-only.outputs.run_conclusion }}"
+          if [[ "${{ steps.run-trigger-only.outputs.run_conclusion }}" != "success" ]]; then exit 1; fi
+
+      - name: "[3] Run Wait Only"
+        id: run-wait-only
+        uses: dragoscops/workflow-trigger-wait@main
+        with:
+          github_token: ${{ secrets.GH_TOKEN }}
+          repo: ${{ github.repository }}
+          workflow_id: "test-workflow.yml"
+          ref: "main"
+          inputs: '{"Timeout": "5"}'
+          wait_interval: "10000"
+          timeout: "60000"
+          action: "wait-only"
+          debug: "yes"
+          run_id: "${{ steps.run-triger-only.outputs.run_id }}"
+
+      - name: "[3] Verify Outputs"
+        run: |
+          echo "Run Conclusion: ${{ steps.run-wait-only.outputs.run_conclusion }}"
+          if [[ "${{ steps.run-wait-only.outputs.run_conclusion }}" != "success" ]]; then exit 1; fi
