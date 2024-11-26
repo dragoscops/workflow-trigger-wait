@@ -15,6 +15,19 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
+      # Install dependencies
+      - name: Install Dependencies
+        run: npm ci
+
+      # Install dependencies
+      - name: Run Tests
+        run: |
+          npm run ca && npm run test
+
+      # Build the action (if TypeScript is used)
+      - name: Build Action
+        run: npm run build
+
       # Run the action with a test workflow
       - name: Run Test Action
         id: run-test
