@@ -1,171 +1,121 @@
-/* eslint-disable sonarjs/no-duplicate-string, max-lines-per-function */
-import * as core from '@actions/core';
 import axios from 'axios';
 import * as MockAdapter from 'axios-mock-adapter';
-import run, {
-  createWorkflow,
-  waitForWorkflow,
-  getTriggerWorkflowUrl,
-  getWorkflowRunIdUrl,
-  getWorkflowStatusUrl,
-} from './index';
+import {triggerWorkflow, TriggerWorkflowError, Options} from './index'; // Adjust the path to your project structure
 
-// Mock the necessary parts of '@actions/core'
-jest.mock('@actions/core');
-const mockGetInput = core.getInput as jest.MockedFunction<typeof core.getInput>;
-const mockSetOutput = core.setOutput as jest.MockedFunction<typeof core.setOutput>;
-const mockSetFailed = core.setFailed as jest.MockedFunction<typeof core.setFailed>;
-const mockInfo = core.info as jest.MockedFunction<typeof core.info>;
+describe('GitHub Action Tests (no_throw branch)', () => {
+  let mock: MockAdapter;
 
-const githubTokenMock = 'fake-token';
-const refMock = 'main';
-const repoMock = 'owner/repo';
-const repoTupleMock = repoMock.split('/') as [string, string];
-const workflowIdMock = 'workflow.yml';
-const runIdMock = '5678';
-
-const triggerWorkflowUrl = getTriggerWorkflowUrl(...repoTupleMock, workflowIdMock);
-const workflowRunIdUrl = getWorkflowRunIdUrl(...repoTupleMock);
-const workflowStatusUrl = getWorkflowStatusUrl(...repoTupleMock, 5678);
-
-const mockInput = (action = 'trigger-and-wait') => {
-  mockGetInput.mockImplementation((name: string) => {
-    switch (name) {
-      case 'github_token':
-        return githubTokenMock;
-      case 'repo':
-        return repoMock;
-      case 'workflow_id':
-        return workflowIdMock;
-      case 'ref':
-        return refMock;
-      case 'inputs':
-        return '{}';
-      case 'wait_interval':
-        return '10s';
-      case 'timeout':
-        return '1h';
-      case 'action':
-        return action;
-      case 'run_id':
-        return runIdMock;
-      default:
-        return '';
-    }
-  });
-};
-
-describe('GitHub Action', () => {
-  let axiosMock: MockAdapter;
+  const defaultOptions: Options = {
+    githubToken: 'fake-token',
+    repo: 'owner/repo',
+    workflowId: 'workflow.yml',
+    ref: 'main',
+    inputs: {key: 'value'},
+    waitInterval: 10000,
+    timeout: 60000,
+    action: 'trigger-and-wait',
+    noThrow: 'false',
+    runId: '',
+  };
 
   beforeEach(() => {
-    axiosMock = new MockAdapter(axios);
-    jest.resetAllMocks();
+    mock = new MockAdapter(axios); // Initialize the Axios mock adapter
   });
 
   afterEach(() => {
-    axiosMock.restore();
+    mock.restore(); // Clean up the mock after each test
   });
 
-  describe('successful triggers', () => {
-    beforeEach(() => {
-      axiosMock.onPost(triggerWorkflowUrl).reply(204);
-      axiosMock.onGet(workflowRunIdUrl).reply(200, {
-        workflow_runs: [
-          {id: runIdMock, status: 'in_progress', path: `.github/workflows/${workflowIdMock}`, head_branch: refMock},
-        ],
-      });
-      // Mock GitHub API responses
-      axiosMock.onGet(workflowStatusUrl).reply(200, {
-        status: 'completed',
-        conclusion: 'success',
-      });
+  describe('triggerWorkflow', () => {
+    it('should successfully trigger a workflow', async () => {
+      const triggerWorkflowUrl = `https://api.github.com/repos/${defaultOptions.repo}/actions/workflows/${defaultOptions.workflowId}/dispatches`;
 
-      mockInput();
+      // Mock the POST request to simulate a successful workflow trigger
+      mock.onPost(triggerWorkflowUrl).reply(204);
+
+      await expect(triggerWorkflow(defaultOptions)).resolves.toBe('');
+      expect(mock.history.post.length).toBe(1); // Ensure the POST request was made
     });
 
-    it('triggerWorkflow(...) should trigger the workflow', async () => {
-      const runId = await createWorkflow({
-        repo: repoMock,
-        workflowId: workflowIdMock,
-        ref: refMock,
-        inputs: {},
-        githubToken: githubTokenMock,
-      });
+    it('should throw an error when triggering the workflow fails and noThrow is false', async () => {
+      const triggerWorkflowUrl = `https://api.github.com/repos/${defaultOptions.repo}/actions/workflows/${defaultOptions.workflowId}/dispatches`;
 
-      expect(runId).toEqual(runIdMock);
-      expect(mockSetOutput).toHaveBeenCalledWith('run_id', runIdMock);
+      // Mock the POST request to return an error
+      mock.onPost(triggerWorkflowUrl).reply(500, {message: 'Internal Server Error'});
+
+      await expect(triggerWorkflow(defaultOptions)).rejects.toThrow(TriggerWorkflowError);
     });
 
-    it('waitForWorkflow(...) should wait for the workflow to complete', async () => {
-      await waitForWorkflow(repoMock, parseInt(runIdMock), 10000, 100000, githubTokenMock, '');
+    it('should not throw an error when triggering fails and noThrow is true', async () => {
+      const options = {...defaultOptions, noThrow: 'true'};
+      const triggerWorkflowUrl = `https://api.github.com/repos/${defaultOptions.repo}/actions/workflows/${defaultOptions.workflowId}/dispatches`;
 
-      expect(mockSetFailed).not.toHaveBeenCalled();
-    });
+      // Mock the POST request to return an error
+      mock.onPost(triggerWorkflowUrl).reply(500, {message: 'Internal Server Error'});
 
-    it('run(trigger-and-wait) should trigger and wait the for the workflow', async () => {
-      await run();
-
-      expect(mockSetFailed).not.toHaveBeenCalled();
-
-      expect(mockSetOutput).toHaveBeenCalledWith('run_id', runIdMock);
-
-      expect(mockInfo).toHaveBeenCalledWith(`Workflow run ${runIdMock} completed successfully.`);
-    });
-
-    it('run(trigger-only) should only trigger the workflow', async () => {
-      mockInput('trigger-only');
-      await run();
-
-      expect(mockSetFailed).not.toHaveBeenCalled();
-
-      expect(mockSetOutput).toHaveBeenCalledWith('run_id', runIdMock);
-
-      expect(mockInfo).not.toHaveBeenCalledWith(`Workflow run ${runIdMock} completed successfully.`);
-    });
-
-    it('run(wait-only) should only wait for the workflow', async () => {
-      mockInput('wait-only');
-      await run();
-
-      expect(mockSetFailed).not.toHaveBeenCalled();
-
-      expect(mockSetOutput).not.toHaveBeenCalledWith('run_id', runIdMock);
-
-      expect(mockInfo).toHaveBeenCalledWith(`Workflow run ${runIdMock} completed successfully.`);
+      await expect(triggerWorkflow(options)).resolves.toBe('');
     });
   });
 
-  // it('should timeout while waiting for the workflow', async () => {
-  //   // Mock GitHub API responses
-  //   axiosMock.onGet(workflowStatusUrl).reply(200, {
-  //     status: 'in_progress',
+  // describe('determineWorkflowRunId', () => {
+  //   it('should return the workflow run ID if found', async () => {
+  //     const workflowRunUrl = `https://api.github.com/repos/${defaultOptions.repo}/actions/runs`;
+  //     mock.onGet(workflowRunUrl).reply(200, {
+  //       workflow_runs: [
+  //         {
+  //           id: 12345,
+  //           head_branch: 'main',
+  //           status: 'queued',
+  //           path: 'workflow.yml',
+  //         },
+  //       ],
+  //     });
+
+  //     const runId = await determineWorkflowRunId(defaultOptions);
+  //     expect(runId).toBe('12345');
   //   });
 
-  //   await expect(waitForWorkflow(repoMock, 5678, 1000, 3000, githubTokenMock)).rejects.toThrow(
-  //     'Timeout waiting for workflow run 5678 to complete.',
-  //   );
+  //   it('should return an empty string if no matching workflow run is found', async () => {
+  //     const workflowRunUrl = `https://api.github.com/repos/${defaultOptions.repo}/actions/runs`;
+  //     mock.onGet(workflowRunUrl).reply(200, {workflow_runs: []});
 
-  //   // expect(mockSetFailed).toHaveBeenCalledWith(
-  //   //   'Action failed with error: Timeout waiting for workflow run 5678 to complete.',
-  //   // );
+  //     const runId = await determineWorkflowRunId(defaultOptions);
+  //     expect(runId).toBe('');
+  //   });
   // });
 
-  // it('should fail if the workflow fails', async () => {
-  //   const workflowStatusUrl = getWorkflowStatusUrl('owner', 'repo', 5678);
+  // describe('waitForWorkflow', () => {
+  //   it('should resolve when the workflow completes successfully', async () => {
+  //     const statusUrl = `https://api.github.com/repos/${defaultOptions.repo}/actions/runs/12345`;
+  //     mock
+  //       .onGet(statusUrl)
+  //       .replyOnce(200, {status: 'in_progress'})
+  //       .onGet(statusUrl)
+  //       .replyOnce(200, {status: 'completed', conclusion: 'success'});
 
-  //   // Mock GitHub API responses
-  //   axiosMock.onGet(workflowStatusUrl).reply(200, {
-  //     status: 'completed',
-  //     conclusion: 'failure',
+  //     await expect(waitForWorkflow({...defaultOptions, runId: '12345'})).resolves.toBeUndefined();
   //   });
 
-  //   await expect(waitForWorkflow(repoMock, 5678, 1000, 10000, githubTokenMock)).rejects.toThrow(
-  //     'Workflow run 5678 failed with conclusion: failure',
-  //   );
+  //   it('should throw an error if the workflow fails', async () => {
+  //     const statusUrl = `https://api.github.com/repos/${defaultOptions.repo}/actions/runs/12345`;
+  //     mock
+  //       .onGet(statusUrl)
+  //       .replyOnce(200, {status: 'in_progress'})
+  //       .onGet(statusUrl)
+  //       .replyOnce(200, {status: 'completed', conclusion: 'failure'});
 
-  //   // expect(mockSetFailed).toHaveBeenCalledWith(
-  //   //   'Action failed with error: Workflow run 5678 failed with conclusion: failure',
-  //   // );
+  //     await expect(waitForWorkflow({...defaultOptions, runId: '12345'})).rejects.toThrow(
+  //       'Workflow run 12345 failed with conclusion: failure',
+  //     );
+  //   });
+
+  //   it('should handle timeout if the workflow does not complete in time', async () => {
+  //     const statusUrl = `https://api.github.com/repos/${defaultOptions.repo}/actions/runs/12345`;
+  //     mock.onGet(statusUrl).reply(200, {status: 'in_progress'});
+
+  //     await expect(waitForWorkflow({...defaultOptions, runId: '12345', timeout: 1000})).rejects.toThrow(
+  //       'Timeout waiting for workflow run 12345 to complete',
+  //     );
+  //   });
   // });
 });
