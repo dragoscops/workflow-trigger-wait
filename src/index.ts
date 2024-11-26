@@ -59,6 +59,7 @@ export default async function run(): Promise<void> {
     core.setOutput('run_conclusion', conclusion); // Always set the conclusion
     console.error(`Error: ${errorMessage(error)}`);
     console.error(`Run Conclusion: ${conclusion}`);
+    console.error(error);
     if (silentFail(options.noThrow)) {
       console.warn('Silent fail enabled. Suppressing action failure.');
     } else {
