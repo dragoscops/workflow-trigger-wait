@@ -8,6 +8,13 @@ on:
        required: true
        default: 5
        type: number
+  workflow_call:
+    inputs:
+      Timeout:
+       description: 'Timeout for the action in minutes'
+       required: true
+       default: 5
+       type: number
 
 
 jobs:
