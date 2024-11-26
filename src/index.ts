@@ -55,6 +55,7 @@ export default async function run(): Promise<void> {
     action: core.getInput('action') as ActionType,
     noThrow: core.getInput('no_throw') || 'false',
     runId: core.getInput('run_id'),
+    debug: core.getInput('debug') || 'no',
   };
 
   try {

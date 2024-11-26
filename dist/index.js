@@ -35,6 +35,7 @@ async function run() {
         action: core.getInput('action'),
         noThrow: core.getInput('no_throw') || 'false',
         runId: core.getInput('run_id'),
+        debug: core.getInput('debug') || 'no',
     };
     try {
         await runAction(options);
