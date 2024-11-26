@@ -1,0 +1,23 @@
+name: Test Workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      Timeout:
+       description: 'Timeout for the action in minutes'
+       required: true
+       default: 5
+       type: number
+
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Test Step
+        run:
+          echo "Test workflow started"
+          echo "Sleeping ${{ inputs.Timeout }} seconds"
+          sleep ${{ inputs.Timeout }}
+          echo "Test workflow ended"

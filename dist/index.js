@@ -1,90 +1,180 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getWorkflowStatusUrl = exports.waitForWorkflow = exports.buildAxiosOptions = exports.getWorkflowRunIdUrl = exports.determineWorkflowRunId = exports.getTriggerWorkflowUrl = exports.triggerWorkflow = void 0;
+exports.getWorkflowRunStatusUrl = exports.waitForWorkflow = exports.buildAxiosOptions = exports.getRunsListUrl = exports.determineWorkflowRunIdAttempt = exports.getWorkflowDetailsIdUrl = exports.determineWorkflowRunId = exports.createWorkflow = exports.CreateWorkflowError = exports.getWorkflowDispatchUrl = exports.triggerWorkflow = exports.TriggerWorkflowError = exports.InvalidWorkflowError = exports.runAction = exports.InputError = exports.GenericError = exports.sleep = exports.silentFail = exports.errorMessage = exports.actionTypes = void 0;
 const core = require("@actions/core");
 const axios_1 = require("axios");
 const parse_duration_1 = require("parse-duration");
+exports.actionTypes = ['trigger-and-wait', 'trigger-only', 'wait-only'];
+function errorMessage(error) {
+    return error instanceof Error ? error.message : JSON.stringify(error);
+}
+exports.errorMessage = errorMessage;
+function silentFail(noThrow) {
+    return ['true', 'yes'].includes(noThrow.toLowerCase());
+}
+exports.silentFail = silentFail;
+async function sleep(interval = 1000) {
+    return new Promise((resolve) => setTimeout(resolve, interval));
+}
+exports.sleep = sleep;
 async function run() {
+    const options = {
+        githubToken: core.getInput('github_token'),
+        repo: core.getInput('repo'),
+        workflowId: core.getInput('workflow_id'),
+        ref: core.getInput('ref') || 'main',
+        inputs: JSON.parse(core.getInput('inputs') || '{}'),
+        waitInterval: (0, parse_duration_1.default)(core.getInput('wait_interval') || '10s', 'ms') || 10 * 1000,
+        timeout: (0, parse_duration_1.default)(core.getInput('timeout') || '1h', 'ms') || 60 * 60 * 1000,
+        action: core.getInput('action'),
+        noThrow: core.getInput('no_throw') || 'false',
+        runId: core.getInput('run_id'),
+    };
     try {
-        const githubToken = core.getInput('github_token');
-        const repo = core.getInput('repo');
-        const workflowId = core.getInput('workflow_id');
-        const ref = core.getInput('ref') || 'main';
-        const inputs = JSON.parse(core.getInput('inputs') || '{}');
-        const waitInterval = (0, parse_duration_1.default)(core.getInput('wait_interval') || '10s', 'ms') || 10 * 1000;
-        const timeout = (0, parse_duration_1.default)(core.getInput('timeout') || '1h', 'ms') || 60 * 60 * 1000;
-        const action = core.getInput('action');
-        const noThrow = core.getInput('no_throw');
-        let runId = core.getInput('run_id');
-        const allActions = ['trigger-and-wait', 'trigger-only', 'wait-only'];
-        if (!allActions.includes(action)) {
-            throw new Error(`Invalid action: ${action}`);
-        }
-        if (action.includes('trigger')) {
-            runId = await triggerWorkflow(repo, workflowId, ref, inputs, githubToken);
-        }
-        if (action.includes('wait')) {
-            if (!runId) {
-                throw new Error(`run_id is required for action: wait-only`);
-            }
-            await waitForWorkflow(repo, parseInt(runId), waitInterval, timeout, githubToken, noThrow);
-        }
+        await runAction(options);
+        core.setOutput('run_conclusion', 'success');
     }
     catch (error) {
-        console.log(error);
-        core.setFailed(`Action failed with error: ${error.message}`);
+        const conclusion = error instanceof GenericError ? error.runConclusion ?? 'unknown' : 'unknown';
+        core.setOutput('run_conclusion', conclusion);
+        console.error(`Error: ${errorMessage(error)}`);
+        console.error(`Run Conclusion: ${conclusion}`);
+        if (silentFail(options.noThrow)) {
+            console.warn('Silent fail enabled. Suppressing action failure.');
+        }
+        else {
+            core.setFailed(`Action failed with error: ${errorMessage(error)}`);
+        }
     }
 }
 exports.default = run;
-async function triggerWorkflow(repo, workflowId, ref, inputs, githubToken) {
-    if (!workflowId || !repo) {
-        throw new Error(`Invalid workflowId or repo: ${repo} / ${workflowId}`);
+class GenericError extends Error {
+    runConclusion = 'unknown';
+}
+exports.GenericError = GenericError;
+class InputError extends GenericError {
+}
+exports.InputError = InputError;
+async function runAction(options) {
+    const { action } = options;
+    if (!exports.actionTypes.includes(action)) {
+        throw new InputError(`Invalid action: ${action}`);
     }
-    const [owner, repoName] = repo.split('/');
-    core.info(`Calling ${getTriggerWorkflowUrl(owner, repoName, workflowId)}`);
-    const response = await axios_1.default.post(getTriggerWorkflowUrl(owner, repoName, workflowId), {
-        ref,
-        inputs,
-    }, buildAxiosOptions(githubToken));
-    core.info(`Triggered workflow: ${workflowId} for ${repo} on ref ${ref}`);
-    if (response.status !== 204) {
-        throw new Error(`Failed to trigger workflow: ${response.statusText}`);
+    console.info(action, action.includes('trigger'), action.includes('wait'));
+    if (action.includes('trigger')) {
+        options.runId = await triggerWorkflow(options);
     }
-    let runId = '';
-    const pollingInterval = 5000;
-    const maxPollingAttempts = 12;
-    for (let attempt = 1; attempt <= maxPollingAttempts; attempt++) {
-        core.info(`Polling attempt ${attempt} to get run ID...`);
-        runId = await determineWorkflowRunId(owner, repoName, ref, workflowId, githubToken);
-        if (runId) {
-            core.info(`Workflow run ID: ${runId}`);
-            core.setOutput('run_id', runId);
-            core.info(`For more info, visit https://github.com/${repo}/actions/runs/${runId}`);
-            return runId;
+    if (action.includes('wait')) {
+        if (!options.runId) {
+            throw new InputError(`run_id is required for action: wait-only`);
         }
-        await new Promise((resolve) => setTimeout(resolve, pollingInterval));
+        await waitForWorkflow(options);
     }
-    throw new Error('Failed to get workflow run ID after multiple polling attempts');
+}
+exports.runAction = runAction;
+class InvalidWorkflowError extends Error {
+    runConclusion = 'invalid_workflow';
+}
+exports.InvalidWorkflowError = InvalidWorkflowError;
+class TriggerWorkflowError extends Error {
+    runConclusion = 'trigger_failed';
+}
+exports.TriggerWorkflowError = TriggerWorkflowError;
+async function triggerWorkflow(options) {
+    const { repo, workflowId } = options;
+    if (!workflowId || !repo) {
+        throw new InvalidWorkflowError(`Invalid workflowId or repo: ${workflowId} / ${repo}`);
+    }
+    try {
+        await createWorkflow(options);
+    }
+    catch (error) {
+        throw new TriggerWorkflowError(`Failed to trigger workflow: ${errorMessage(error)}`, { cause: error });
+    }
+    try {
+        return determineWorkflowRunId(options);
+    }
+    catch (error) {
+        throw new TriggerWorkflowError(`Failed to read workflow id: ${errorMessage(error)}`, { cause: error });
+    }
 }
 exports.triggerWorkflow = triggerWorkflow;
-function getTriggerWorkflowUrl(owner, repoName, workflowId) {
+function getWorkflowDispatchUrl({ repo, workflowId }) {
+    const [owner, repoName] = repo.split('/');
     return `https://api.github.com/repos/${owner}/${repoName}/actions/workflows/${workflowId}/dispatches`;
 }
-exports.getTriggerWorkflowUrl = getTriggerWorkflowUrl;
-async function determineWorkflowRunId(owner, repoName, ref, workflowId, githubToken) {
-    const response = await axios_1.default.get(getWorkflowRunIdUrl(owner, repoName), buildAxiosOptions(githubToken));
-    const runs = response.data.workflow_runs;
+exports.getWorkflowDispatchUrl = getWorkflowDispatchUrl;
+class CreateWorkflowError extends Error {
+    runConclusion = 'workflow_failed';
+}
+exports.CreateWorkflowError = CreateWorkflowError;
+async function createWorkflow(options) {
+    const { ref, inputs, githubToken } = options;
+    const workflowUrl = getWorkflowDispatchUrl(options);
+    core.info(`Calling ${workflowUrl}@${ref}`);
+    try {
+        const response = await axios_1.default.post(workflowUrl, {
+            ref,
+            inputs,
+        }, buildAxiosOptions(githubToken));
+        if (response.status !== 204) {
+            throw new Error(response.statusText);
+        }
+    }
+    catch (error) {
+        throw new Error(`Failed to trigger workflow: ${errorMessage(error)}`);
+    }
+    core.info(`Called ${workflowUrl}@${ref}`);
+}
+exports.createWorkflow = createWorkflow;
+class DetermineWorkflowIdError extends TriggerWorkflowError {
+}
+async function determineWorkflowRunId(options) {
+    const determineRunId = {
+        pollingInterval: 5000,
+        maxPollingAttempts: 12,
+        ...(options.determineRunId ?? {}),
+    };
+    const { maxPollingAttempts, pollingInterval } = determineRunId;
+    let runId = '';
+    for (let attempt = 1; attempt <= maxPollingAttempts; attempt++) {
+        core.info(`Polling attempt  to get run ID...`);
+        try {
+            runId = await determineWorkflowRunIdAttempt(options);
+        }
+        catch (error) {
+            throw new DetermineWorkflowIdError(`Failed to get workflow run ID: ${errorMessage(error)}`, { cause: error });
+        }
+        if (runId) {
+            core.info(`Workflow run ID: `);
+            core.setOutput('run_id', runId);
+            core.info(`For more info, visit ${getWorkflowDetailsIdUrl(options)}`);
+            return runId;
+        }
+        await sleep(pollingInterval);
+    }
+    throw new DetermineWorkflowIdError('Failed to get workflow run ID after multiple polling attempts');
+}
+exports.determineWorkflowRunId = determineWorkflowRunId;
+function getWorkflowDetailsIdUrl({ repo, runId }) {
+    return `https://github.com/${repo}/actions/runs/${runId}`;
+}
+exports.getWorkflowDetailsIdUrl = getWorkflowDetailsIdUrl;
+async function determineWorkflowRunIdAttempt(options) {
+    const { ref, workflowId, githubToken } = options;
+    const response = await axios_1.default.get(getRunsListUrl(options), buildAxiosOptions(githubToken));
+    const runs = response?.data?.workflow_runs ?? [];
     const run = runs.find((r) => r.head_branch === ref && r.path.endsWith(workflowId) && r.status !== 'completed');
     if (!run) {
         return '';
     }
     return run.id.toString();
 }
-exports.determineWorkflowRunId = determineWorkflowRunId;
-function getWorkflowRunIdUrl(owner, repoName) {
-    return `https://api.github.com/repos/${owner}/${repoName}/actions/runs`;
+exports.determineWorkflowRunIdAttempt = determineWorkflowRunIdAttempt;
+function getRunsListUrl({ repo }) {
+    return `https://api.github.com/repos/${repo}/actions/runs`;
 }
-exports.getWorkflowRunIdUrl = getWorkflowRunIdUrl;
+exports.getRunsListUrl = getRunsListUrl;
 function buildAxiosOptions(githubToken) {
     return {
         headers: {
@@ -95,17 +185,36 @@ function buildAxiosOptions(githubToken) {
     };
 }
 exports.buildAxiosOptions = buildAxiosOptions;
-async function waitForWorkflow(repo, runId, interval, timeout, githubToken, noThrow) {
+class WaitForWorkflowError extends Error {
+    runConclusion;
+    constructor(runConclusion, message, ...args) {
+        super(message, ...args);
+        this.runConclusion = runConclusion;
+    }
+}
+class WorkflowTimeoutError extends Error {
+    runConclusion = 'timeout';
+}
+async function waitForWorkflow(options) {
+    const { runId, waitInterval, timeout, githubToken } = options;
     if (!runId) {
-        throw new Error(`Invalid runId: ${runId}`);
+        throw new InputError(`Invalid runId: ${runId}`);
     }
     core.info(`Waiting for workflow ${runId}`);
-    core.info(`For more info, visit https://github.com/${repo}/actions/runs/${runId}`);
-    const [owner, repoName] = repo.split('/');
+    core.info(`For more info, visit ${getWorkflowDetailsIdUrl(options)}`);
     const startTime = Date.now();
+    const workflowRunStatusUrl = getWorkflowRunStatusUrl(options);
+    let response;
     while (Date.now() - startTime <= timeout) {
-        const url = getWorkflowStatusUrl(owner, repoName, runId);
-        const response = await axios_1.default.get(url, buildAxiosOptions(githubToken));
+        try {
+            response = await axios_1.default.get(workflowRunStatusUrl, buildAxiosOptions(githubToken));
+        }
+        catch (error) {
+            console.log(error);
+            throw new WaitForWorkflowError('failure', `Workflow run ${runId} status request failed: ${errorMessage(error)}`, {
+                cause: error,
+            });
+        }
         const run = response.data;
         const status = run.status;
         const conclusion = run.conclusion;
@@ -114,30 +223,17 @@ async function waitForWorkflow(repo, runId, interval, timeout, githubToken, noTh
                 core.info(`Workflow run ${runId} completed successfully.`);
                 return;
             }
-            if (!['true', 'yes'].includes(noThrow.toLowerCase())) {
-                throw new Error(`Workflow run ${runId} failed with conclusion: ${conclusion}`);
-            }
-            else {
-                core.error(`Workflow run ${runId} failed with conclusion: ${conclusion}`);
-                core.setOutput('run_id', runId);
-                core.setOutput('run_conclusion', conclusion);
-                return;
-            }
+            throw new WaitForWorkflowError(conclusion, `Workflow run ${runId} failed with conclusion: ${conclusion}`);
         }
-        core.info(`Workflow run ${runId} is in status: ${status}. Waiting for ${interval / 1000} seconds...`);
-        await new Promise((resolve) => setTimeout(resolve, interval));
+        core.info(`Workflow run ${runId} is in status: ${status}. Waiting for ${waitInterval / 1000} seconds...`);
+        await sleep(waitInterval);
     }
-    if (!['true', 'yes'].includes(noThrow.toLowerCase())) {
-        throw new Error(`Timeout waiting for workflow run ${runId} to complete.`);
-    }
-    else {
-        core.setOutput('run_id', runId);
-        core.setOutput('run_conclusion', 'timeout');
-    }
+    core.setOutput('run_id', runId);
+    throw new WorkflowTimeoutError(`Timeout waiting for workflow run ${runId} to complete.`);
 }
 exports.waitForWorkflow = waitForWorkflow;
-function getWorkflowStatusUrl(owner, repoName, runId) {
-    return `https://api.github.com/repos/${owner}/${repoName}/actions/runs/${runId}`;
+function getWorkflowRunStatusUrl({ repo, runId }) {
+    return `https://api.github.com/repos/${repo}/actions/runs/${runId}`;
 }
-exports.getWorkflowStatusUrl = getWorkflowStatusUrl;
+exports.getWorkflowRunStatusUrl = getWorkflowRunStatusUrl;
 run();
