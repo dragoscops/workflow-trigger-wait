@@ -7,7 +7,7 @@ on:
       - main
 
 jobs:
-  test-action:
+  unit-test-action:
     runs-on: ubuntu-latest
 
     steps:
@@ -28,10 +28,15 @@ jobs:
       - name: Build Action
         run: npm run build
 
+  workflow-test-action:
+    runs-on: ubuntu-latest
+    needs:
+      - unit-test-action
+    steps:
       # Run the action with a test workflow
       - name: Run Test Action
         id: run-test
-        uses: dragosops/workflow-trigger-wait@main
+        uses: dragoscops/workflow-trigger-wait@main
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           repo: ${{ github.repository }}
