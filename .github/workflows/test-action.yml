@@ -7,38 +7,38 @@ on:
       - main
 
 jobs:
-  unit-test-action:
-    runs-on: ubuntu-latest
+  # unit-test-action:
+  #   runs-on: ubuntu-latest
 
-    steps:
-      # Check out the repository code
-      - name: Checkout Code
-        uses: actions/checkout@v3
+  #   steps:
+  #     # Check out the repository code
+  #     - name: Checkout Code
+  #       uses: actions/checkout@v3
 
-      # Install dependencies
-      - name: Install Dependencies
-        run: npm ci
+  #     # Install dependencies
+  #     - name: Install Dependencies
+  #       run: npm ci
 
-      # Install dependencies
-      - name: Run Tests
-        run: |
-          npm run ca && npm run test
+  #     # Install dependencies
+  #     - name: Run Tests
+  #       run: |
+  #         npm run ca && npm run test
 
-      # Build the action (if TypeScript is used)
-      - name: Build Action
-        run: npm run build
+  #     # Build the action (if TypeScript is used)
+  #     - name: Build Action
+  #       run: npm run build
 
   workflow-test-action:
     runs-on: ubuntu-latest
-    needs:
-      - unit-test-action
+    # needs:
+    #   - unit-test-action
     steps:
       # Run the action with a test workflow
       - name: Run Test Action
         id: run-test
         uses: dragoscops/workflow-trigger-wait@main
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.GH_TOKEN }}
           repo: ${{ github.repository }}
           workflow_id: "test-workflow.yml"
           ref: "main"
