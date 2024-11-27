@@ -34,11 +34,11 @@ jobs:
     steps:
       - name: Test Step
         run:
-          echo "Test workflow started"
-          echo "Sleeping ${{ inputs.Timeout }} seconds"
-          sleep ${{ inputs.Timeout }}
+          echo "Test workflow started";
+          echo "Sleeping ${{ inputs.Timeout }} seconds";
+          sleep ${{ inputs.Timeout }};
           if [[ "${{ inputs.Throw }}" == "yes" ]]; then
-            echo "Throwing error"
-            exit 1
-          fi
-          echo "Test workflow ended"
+            echo "Throwing error";
+            exit 1;
+          fi;
+          echo "Test workflow ended";

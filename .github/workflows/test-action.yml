@@ -110,7 +110,7 @@ jobs:
       - name: "[4] Verify Outputs"
         run: |
           echo "Run Conclusion: ${{ steps.run-throw-trigger-and-wait.outputs.run_conclusion }}"
-          if [[ "${{ steps.run-throw-trigger-and-wait.outputs.run_conclusion }}" != "failed" ]]; then exit 1; fi
+          if [[ "${{ steps.run-throw-trigger-and-wait.outputs.run_conclusion }}" != "failure" ]]; then exit 1; fi
 
       - name: "[5] Run Timeout Trigger And Wait"
         id: run-timeout-trigger-and-wait
