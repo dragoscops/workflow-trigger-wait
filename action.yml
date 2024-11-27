@@ -39,7 +39,11 @@ inputs:
     description: |
       If set to 'yes' or 'true', will not throw errors when waiting for a workflow,
       instead will print the error message to 'run_conclusion' output.
-    required: false
+    required: 'no'
+  debug:
+    description: |
+      Pring debug information
+    required: 'no'
 runs:
   using: "node20"
   main: "dist/index.js"
