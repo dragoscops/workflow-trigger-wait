@@ -48,6 +48,7 @@ async function run() {
         core.setOutput('run_conclusion', 'success');
     }
     catch (error) {
+        console.log(error);
         const conclusion = error instanceof GenericError ? error.runConclusion ?? 'unknown' : 'unknown';
         core.setOutput('run_conclusion', conclusion);
         core.info(`Run Conclusion: ${conclusion}`);

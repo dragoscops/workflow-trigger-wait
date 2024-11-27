@@ -68,6 +68,7 @@ export default async function run(): Promise<void> {
     await runAction(options);
     core.setOutput('run_conclusion', 'success'); // Explicitly mark as successful
   } catch (error) {
+    console.log(error);
     const conclusion = error instanceof GenericError ? error.runConclusion ?? 'unknown' : 'unknown';
 
     core.setOutput('run_conclusion', conclusion); // Always set the conclusion
