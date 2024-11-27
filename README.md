@@ -1,44 +1,52 @@
-# GitHub Action: Trigger and Wait for Workflows
+# GitHub Action: Workflow Trigger and Wait
 
-- [GitHub Action: Trigger and Wait for Workflows](#github-action-trigger-and-wait-for-workflows)
-  - [Features](#features)
-  - [Usage](#usage)
-    - [Inputs](#inputs)
-    - [Example Workflow](#example-workflow)
-      - [Trigger and Wait](#trigger-and-wait)
-      - [Trigger and Wait Lager](#trigger-and-wait-lager)
-    - [Modes of Operation](#modes-of-operation)
-  - [Development](#development)
-    - [Running Tests](#running-tests)
-    - [Building](#building)
-  - [Contributing](#contributing)
-
-
-This GitHub Action allows you to trigger one or more workflows from a different repository and optionally wait for them to complete. It's particularly useful for coordinating workflows across multiple repositories.
+This GitHub Action facilitates triggering workflows in a different repository and optionally waiting for them to complete. It's designed to streamline the coordination of workflows across multiple repositories.
 
 ## Features
 
-- Trigger workflows in a different repository.
-- Wait for workflows to complete with customizable intervals and timeouts.
-- Supports three modes of operation: `trigger-and-wait`, `trigger-only`, and `wait-only`.
-- Configurable inputs for maximum flexibility.
+- **Trigger Workflows:** Initiates workflows in a target repository.
+- **Wait for Completion:** Optionally wait for workflows to complete with customizable polling intervals and timeouts.
+- **Modes of Operation:**
+  - `trigger-and-wait` (default): Triggers the workflow and waits for it to complete.
+  - `trigger-only`: Triggers the workflow without waiting for it to complete.
+  - `wait-only`: Waits for the completion of a specific workflow using its `run_id`.
+- **Configurable Inputs:** Flexible inputs allow for dynamic and customizable behavior.
+- **Error Handling:**
+  - Use `no_throw` to suppress errors and capture them in outputs.
+- **Debugging Support:** Provides detailed logs when debug mode is enabled.
+
+---
 
 ## Usage
 
 ### Inputs
 
-- `github_token`: **Required** - The GitHub token for authentication. 
-- `repo`: The target repository in the format `owner/repo`.
-- `workflow_id`: The workflow file name or ID to trigger.
-- `ref`: The git reference for the workflow (branch, tag, or commit SHA). Defaults to `main`.
-- `inputs`: JSON string of input parameters for the workflow. Defaults to `{}`
-- `wait_interval`: Interval between status checks when waiting for the workflow to complete. Defaults to `10s`.
-- `timeout`: Maximum time to wait for the workflow to complete. Defaults to `1h`.
-- `action`: The action mode: `trigger-and-wait`, `trigger-only`, or `wait-only`. Defaults to `trigger-and-wait`.
-- `run_id`: The run ID of the workflow to wait for. Required if `action` is `wait-only`.
-- `no_throw`: If set to `yes` or `true`, will not throw errors when waiting for a workflow, instead will print the error message to `run_conclusion` output.
+| Name             | Required | Default     | Description                                                                 |
+|------------------|----------|-------------|-----------------------------------------------------------------------------|
+| `github_token`   | **Yes**  | N/A         | GitHub token for authentication.                                           |
+| `repo`           | No       | N/A         | Target repository in the format `owner/repo`.                              |
+| `workflow_id`    | No       | N/A         | Workflow file name or ID to trigger.                                       |
+| `ref`            | No       | `main`      | Git reference (branch, tag, or commit SHA) for the workflow.               |
+| `inputs`         | No       | `{}`        | JSON string of inputs for the workflow.                                    |
+| `wait_interval`  | No       | `10s`       | Interval between status checks (e.g., `30s`, `1m`).                        |
+| `timeout`        | No       | `1h`        | Maximum time to wait for workflow completion (e.g., `15m`, `2h`).          |
+| `action`         | No       | `trigger-and-wait` | Mode of operation: `trigger-and-wait`, `trigger-only`, or `wait-only`. |
+| `run_id`         | No       | N/A         | Workflow run ID (required for `wait-only`).                                |
+| `no_throw`       | No       | `false`     | Suppresses errors if set to `true` or `yes`.                               |
+| `debug`          | No       | `no`        | Enables debug logs if set to `true` or `yes`.                              |
 
-### Example Workflow
+---
+
+### Outputs
+
+| Name              | Description                                    |
+|-------------------|------------------------------------------------|
+| `run_id`          | The workflow run ID.                          |
+| `run_conclusion`  | The conclusion of the workflow run (`success`, `failure`, `timeout`, etc.). |
+
+---
+
+### Example Workflows
 
 #### Trigger and Wait
 
@@ -52,88 +60,85 @@ jobs:
   trigger-and-wait:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
       - name: Trigger and Wait for Workflow
-        uses: clbt-5f49f15a/wait-for-workflow@v1
+        uses: dragoscops/workflow-trigger-wait@v2
         with:
-          action: "trigger-and-wait"
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          inputs: '{"exampleInput": "exampleValue"}'
-          ref: "main"
           repo: "owner/target-repo"
-          timeout: "20m"
+          workflow_id: "workflow.yml"
+          ref: "main"
+          inputs: '{"key": "value"}'
           wait_interval: "30s"
-          workflow_id: "target-workflow.yml"
+          timeout: "15m"
+          action: "trigger-and-wait"
 ```
 
-#### Trigger and Wait Lager
-
+#### Trigger and Perform Additional Actions Before Waiting
 
 ```yaml
-name: Trigger and Wait after Performing other Actions
+name: Trigger and Wait with Other Steps
 
 on:
   workflow_dispatch:
 
 jobs:
-  run-custom-action:
+  trigger-and-wait:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
       - name: Trigger Workflow
         id: trigger
-        uses: clbt-5f49f15a/wait-for-workflow@v1
+        uses: dragoscops/workflow-trigger-wait@v2
         with:
-          action: 'trigger-only'
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          repo: "owner/target-repo"
+          workflow_id: "workflow.yml"
+          ref: "main"
           inputs: '{"param1": "value1"}'
-          ref: 'main'
-          repo: 'owner/repository'
-          workflow_id: 'workflow.yml'
+          action: "trigger-only"
 
-      # other actions can be performed here
+      # Additional actions can be performed here before waiting
 
-      - name: Wait for Workflow
-        uses: clbt-5f49f15a/wait-for-workflow@v1
+      - name: Wait for Workflow Completion
+        uses: dragoscops/workflow-trigger-wait@v2
         with:
-          action: 'wait-only'
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          repo: 'owner/repository'
+          repo: "owner/target-repo"
           run_id: ${{ steps.trigger.outputs.run_id }}
-          timeout: '2h'
-          wait_interval: '30s'
-
+          action: "wait-only"
+          wait_interval: "15s"
+          timeout: "20m"
 ```
+
+---
 
 ### Modes of Operation
 
-* `trigger-and-wait` (default): Triggers the specified workflow and waits for it to complete.
-* `trigger-only`: Only triggers the specified workflow without waiting for it to complete.
-* `wait-only`: Only waits for the specified workflow to complete. Requires run_id to be provided.
+1. **`trigger-and-wait` (default):** Triggers the workflow and waits for it to complete.
+2. **`trigger-only`:** Only triggers the workflow without waiting.
+3. **`wait-only`:** Waits for a specific workflow to complete. Requires a `run_id`.
 
+---
 
 ## Development
 
 ### Running Tests
 
-To run the tests, use the following command:
+Run the following command to execute tests:
 
 ```bash
-npm run test
+npm test
 ```
 
 ### Building
 
-To build the action, use the following command:
+Use this command to build the action:
 
 ```bash
 npm run build
 ```
 
+---
+
 ## Contributing
 
-Contributions are welcome! Please open an issue or submit a pull request for any improvements or bug fixes.
+Contributions are welcome! Please submit issues or pull requests for any bugs or feature requests.
