@@ -6,15 +6,25 @@ on:
       Timeout:
        description: 'Timeout for the action in minutes'
        required: true
-       default: 5
-       type: number
+       default: "5"
+       type: string
+      Throw:
+       description: 'Throw error'
+       required: true
+       default: "no"
+       type: string
   workflow_call:
     inputs:
       Timeout:
        description: 'Timeout for the action in minutes'
        required: true
-       default: 5
-       type: number
+       default: "5"
+       type: string
+      Throw:
+       description: 'Throw error'
+       required: true
+       default: "no"
+       type: string
 
 
 jobs:
@@ -27,4 +37,8 @@ jobs:
           echo "Test workflow started"
           echo "Sleeping ${{ inputs.Timeout }} seconds"
           sleep ${{ inputs.Timeout }}
+          if [[ "${{ inputs.Throw }}" == "yes" ]]; then
+            echo "Throwing error"
+            exit 1
+          fi
           echo "Test workflow ended"

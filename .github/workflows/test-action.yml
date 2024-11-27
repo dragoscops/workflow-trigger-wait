@@ -91,3 +91,43 @@ jobs:
         run: |
           echo "Run Conclusion: ${{ steps.run-wait-only.outputs.run_conclusion }}"
           if [[ "${{ steps.run-wait-only.outputs.run_conclusion }}" != "success" ]]; then exit 1; fi
+
+      - name: "[4] Run Timeout Trigger And Wait"
+        id: run-throw-trigger-and-wait
+        uses: dragoscops/workflow-trigger-wait@main
+        with:
+          github_token: ${{ secrets.GH_TOKEN }}
+          repo: ${{ github.repository }}
+          workflow_id: "test-workflow.yml"
+          ref: "main"
+          inputs: '{"Timeout": "5"}'
+          wait_interval: "1000"
+          timeout: "3000"
+          action: "trigger-and-wait"
+          debug: "yes"
+          no_throw: "yes"
+
+      - name: "[4] Verify Outputs"
+        run: |
+          echo "Run Conclusion: ${{ steps.run-throw-trigger-and-wait.outputs.run_conclusion }}"
+          if [[ "${{ steps.run-throw-trigger-and-wait.outputs.run_conclusion }}" != "failed" ]]; then exit 1; fi
+
+      - name: "[5] Run Timeout Trigger And Wait"
+        id: run-timeout-trigger-and-wait
+        uses: dragoscops/workflow-trigger-wait@main
+        with:
+          github_token: ${{ secrets.GH_TOKEN }}
+          repo: ${{ github.repository }}
+          workflow_id: "test-workflow.yml"
+          ref: "main"
+          inputs: '{"Timeout": "5"}'
+          wait_interval: "1000"
+          timeout: "3000"
+          action: "trigger-and-wait"
+          debug: "yes"
+          no_throw: "yes"
+
+      - name: "[5] Verify Outputs"
+        run: |
+          echo "Run Conclusion: ${{ steps.run-timeout-trigger-and-wait.outputs.run_conclusion }}"
+          if [[ "${{ steps.run-timeout-trigger-and-wait.outputs.run_conclusion }}" != "timeout" ]]; then exit 1; fi
