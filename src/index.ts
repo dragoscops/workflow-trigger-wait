@@ -67,18 +67,18 @@ export default async function run(): Promise<void> {
   try {
     await runAction(options);
     core.setOutput('run_conclusion', 'success'); // Explicitly mark as successful
-  } catch (error) {
-    console.log(error);
-    const conclusion = error instanceof GenericError ? error.runConclusion ?? 'unknown' : 'unknown';
+  } catch (err) {
+    console.log(err);
+    const conclusion = err instanceof GenericError ? err.runConclusion ?? 'unknown' : 'unknown';
 
     core.setOutput('run_conclusion', conclusion); // Always set the conclusion
     core.info(`Run Conclusion: ${conclusion}`);
-    core.info(`Error: ${errorMessage(error)}`);
-    doDebug(options, '[runAction]', error);
+    core.info(`Error: ${errorMessage(err)}`);
+    doDebug(options, '[runAction]', err);
     if (silentFail(options.noThrow)) {
       core.warning('Silent fail enabled. Suppressing action failure.');
     } else {
-      core.setFailed(`Action failed with error: ${errorMessage(error)}`);
+      core.setFailed(`Action failed with error: ${errorMessage(err)}`);
     }
   }
 }
@@ -108,11 +108,11 @@ export async function runAction(options: Options) {
   }
 }
 
-export class InvalidWorkflowError extends Error {
+export class InvalidWorkflowError extends GenericError {
   runConclusion = 'invalid_workflow';
 }
 
-export class TriggerWorkflowError extends Error {
+export class TriggerWorkflowError extends GenericError {
   runConclusion = 'trigger_failed';
 }
 
@@ -145,7 +145,7 @@ export function getWorkflowDispatchUrl({repo, workflowId}: Options) {
   return `https://api.github.com/repos/${owner}/${repoName}/actions/workflows/${workflowId}/dispatches`;
 }
 
-export class CreateWorkflowError extends Error {
+export class CreateWorkflowError extends GenericError {
   runConclusion = 'workflow_failed';
 }
 
@@ -244,7 +244,7 @@ export function buildAxiosOptions(githubToken: string): AxiosRequestConfig {
   };
 }
 
-class WaitForWorkflowError extends Error {
+class WaitForWorkflowError extends GenericError {
   constructor(
     public runConclusion: string,
     message: string,
@@ -255,7 +255,7 @@ class WaitForWorkflowError extends Error {
   }
 }
 
-class WorkflowTimeoutError extends Error {
+class WorkflowTimeoutError extends GenericError {
   runConclusion = 'timeout';
 }
 
