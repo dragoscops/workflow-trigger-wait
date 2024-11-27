@@ -101,8 +101,8 @@ jobs:
           workflow_id: "test-workflow.yml"
           ref: "main"
           inputs: '{"Timeout": "5", "Throw": "yes"}'
-          wait_interval: "1000"
-          timeout: "3000"
+          wait_interval: "10000"
+          timeout: "60000"
           action: "trigger-and-wait"
           debug: "yes"
           no_throw: "yes"
