@@ -50,11 +50,11 @@ async function run() {
     catch (error) {
         const conclusion = error instanceof GenericError ? error.runConclusion ?? 'unknown' : 'unknown';
         core.setOutput('run_conclusion', conclusion);
-        console.error(`Error: ${errorMessage(error)}`);
-        console.error(`Run Conclusion: ${conclusion}`);
+        core.info(`Run Conclusion: ${conclusion}`);
+        core.info(`Error: ${errorMessage(error)}`);
         doDebug(options, '[runAction]', error);
         if (silentFail(options.noThrow)) {
-            console.warn('Silent fail enabled. Suppressing action failure.');
+            core.warning('Silent fail enabled. Suppressing action failure.');
         }
         else {
             core.setFailed(`Action failed with error: ${errorMessage(error)}`);
