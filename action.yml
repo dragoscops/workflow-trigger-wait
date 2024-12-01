@@ -1,8 +1,16 @@
 name: "Trigger and Wait for Workflows"
 description: "Triggers one or more workflows in a different repository and waits for them to end"
 inputs:
-  github_token:
-    description: "GitHub token"
+  credentials:
+    description: |
+      JSON string of credentials to use for authentication.
+      Can include either:
+        - 'token': a GitHub token (e.g., a personal access token or GitHub App token).
+        - 'app': an object with 'appId', 'installationId', and 'privateKey' for GitHub App authentication.
+      Example:
+        '{"token": "your-github-token"}'
+      or
+        '{"app": {"appId": "12345", "installationId": "67890", "privateKey": "your-private-key"}}'
     required: true
   repo:
     description: "Repository to trigger workflows in (format: owner/repo)"
@@ -34,16 +42,16 @@ inputs:
   run_id:
     description: "Run ID of the workflow to wait for (required for wait-only action)"
     required: false
-    default: trigger-and-wait
   no_throw:
     description: |
       If set to 'yes' or 'true', will not throw errors when waiting for a workflow,
       instead will print the error message to 'run_conclusion' output.
-    required: 'no'
+    required: false
+    default: 'no'
   debug:
-    description: |
-      Pring debug information
-    required: 'no'
+    description: "Print debug information"
+    required: false
+    default: 'no'
 runs:
   using: "node20"
   main: "dist/index.js"

@@ -16,7 +16,7 @@ module.exports = {
     'plugin:import/typescript',
     'plugin:jest/recommended',
   ],
-  plugins: ['@typescript-eslint', 'sonarjs', 'prettier', 'import'],
+  plugins: ['@typescript-eslint', 'jest', 'sonarjs', 'prettier', 'import'],
   overrides: [
     {
       env: {
@@ -33,6 +33,7 @@ module.exports = {
     ecmaVersion: 'latest',
   },
   rules: {
+    'jest/no-conditional-expect': 'off',
     '@typescript-eslint/object-curly-spacing': 'off',
     '@typescript-eslint/space-infix-ops': 'off',
     'consistent-return': 2,
