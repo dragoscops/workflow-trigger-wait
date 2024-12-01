@@ -7,7 +7,7 @@ export class GenericError extends Error {
 export class InputError extends GenericError {}
 
 export function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : JSON.stringify(error);
+  return error instanceof Error ? error.message : typeof error === 'string' ? error : JSON.stringify(error);
 }
 
 export function silentFail(noThrow: string): boolean {
@@ -29,3 +29,5 @@ export function doDebug(options: Options, ...values: unknown[]) {
 export async function sleep(interval = 1000): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, interval));
 }
+
+export const errorMessage_MissingAppCredentialsKeys = 'Missing appId, installationId, or privateKey in AppCredentials.';

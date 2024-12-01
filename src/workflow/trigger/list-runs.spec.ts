@@ -2,7 +2,7 @@
 /* eslint-disable max-lines-per-function */
 import axios from 'axios';
 import '@actions/core';
-import * as MockAdapter from 'axios-mock-adapter';
+import MockAdapter from 'axios-mock-adapter';
 
 import {lastUncompletedRunAttempt, lastUncompletedRun} from './list-runs';
 import {defaultOptions} from '../../options';

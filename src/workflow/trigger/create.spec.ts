@@ -1,7 +1,7 @@
 /* eslint-disable max-lines-per-function */
 import '@actions/core';
 import axios from 'axios';
-import * as MockAdapter from 'axios-mock-adapter';
+import MockAdapter from 'axios-mock-adapter';
 
 import {createWorkflow} from './create';
 import {GithubApiUrl} from '../../github-api-url';

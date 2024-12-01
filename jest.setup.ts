@@ -14,3 +14,16 @@ jest.mock('@actions/core', () => ({
 console.error = jest.fn();
 console.log = jest.fn();
 console.warn = jest.fn();
+
+jest.mock('crypto', () => ({
+  createPrivateKey: jest.fn(),
+}));
+jest.mock('jose', () => ({
+  SignJWT: jest.fn().mockImplementation(() => ({
+    setProtectedHeader: jest.fn().mockReturnThis(),
+    sign: jest.fn(),
+  })),
+}));
+jest.mock('@octokit/auth-app', () => ({
+  createAppAuth: jest.fn(),
+}));

@@ -1,7 +1,6 @@
 import * as core from '@actions/core';
 import parseDuration from 'parse-duration';
 
-import {Credentials} from './github-client';
 import {errorMessage, InputError} from './utils';
 
 export const actionTriggerAndWait = 'trigger-and-wait';
@@ -11,6 +10,17 @@ export const actionWaitOnly = 'wait-only';
 export const actionTypes = [actionTriggerAndWait, actionTriggerOnly, actionWaitOnly] as const;
 
 export type ActionType = (typeof actionTypes)[number];
+
+export type AppCredentials = {
+  appId: string;
+  installationId: string;
+  privateKey: string;
+};
+
+export type Credentials = {
+  token?: string;
+  app?: AppCredentials;
+};
 
 export type Options = {
   credentials: Credentials;
@@ -44,6 +54,17 @@ export const defaultOptions: Options = {
   determineRunId: {
     pollingInterval: 500,
     maxPollingAttempts: 3,
+  },
+};
+
+export const defaultOptionsForApp: Options = {
+  ...defaultOptions,
+  credentials: {
+    app: {
+      appId: '123456',
+      installationId: '78910',
+      privateKey: '-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhki...IDAQAB\n-----END PRIVATE KEY-----',
+    },
   },
 };
 

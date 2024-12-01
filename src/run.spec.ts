@@ -1,8 +1,8 @@
-import {GithubApiUrl} from './github-api-url';
 /* eslint-disable max-len */
 /* eslint-disable max-lines-per-function */
+import {GithubApiUrl} from './github-api-url';
 import axios from 'axios';
-import * as MockAdapter from 'axios-mock-adapter';
+import MockAdapter from 'axios-mock-adapter';
 import {actionTriggerAndWait, defaultOptions, Options} from './options';
 import {runAction} from './run';
 
