@@ -24,6 +24,6 @@ jest.mock('jose', () => ({
     sign: jest.fn(),
   })),
 }));
-jest.mock('@octokit/auth-app', () => ({
-  createAppAuth: jest.fn(),
-}));
+// jest.mock('@octokit/auth-app', () => ({
+//   createAppAuth: jest.fn(),
+// }));

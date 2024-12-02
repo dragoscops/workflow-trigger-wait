@@ -4,20 +4,20 @@
 import axios from 'axios';
 import {createPrivateKey} from 'crypto';
 import {SignJWT} from 'jose';
-import {createAppAuth} from '@octokit/auth-app';
+// import {createAppAuth} from '@octokit/auth-app';
 
 import * as githubClient from './github-client';
 import {
   CreateGithubAppTokenError,
   createGithubAppTokenRaw,
   FailedToRequestInstallationTokenError,
-  createGithubAppTokenOctokit,
+  // createGithubAppTokenOctokit,
   createGithubToken,
   // createGithubClient,
   requestInstallationToken,
   tokenCache,
 } from './github-client';
-import {AppCredentials, Credentials, defaultOptions, defaultOptionsForApp} from './options';
+import {/*AppCredentials, */ Credentials, defaultOptions, defaultOptionsForApp} from './options';
 import {GithubApiUrl} from './github-api-url';
 import {errorMessage_MissingAppCredentialsKeys} from './utils';
 // import {InputError} from './utils';
@@ -37,7 +37,7 @@ const futureExpirationDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toS
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 const mockedCreatePrivateKey = createPrivateKey as jest.Mock;
 const mockedSignJWT = SignJWT as jest.MockedClass<typeof SignJWT>;
-const mockedCreateAppAuth = createAppAuth as jest.Mock;
+// const mockedCreateAppAuth = createAppAuth as jest.Mock;
 
 describe('github-client', () => {
   const sampleCredentialsForApp = defaultOptionsForApp.credentials;
@@ -236,59 +236,59 @@ describe('github-client', () => {
     });
   });
 
-  describe('createGithubAppTokenOctokit', () => {
-    it('should successfully create a GitHub App installation token using Octokit', async () => {
-      // Mock createAppAuth
-      const mockAuth = {
-        token: 'octokit-installation-token',
-        expiresAt: futureExpirationDate,
-      };
-      mockedCreateAppAuth.mockReturnValueOnce(jest.fn().mockResolvedValue(mockAuth));
+  // describe('createGithubAppTokenOctokit', () => {
+  //   it('should successfully create a GitHub App installation token using Octokit', async () => {
+  //     // Mock createAppAuth
+  //     const mockAuth = {
+  //       token: 'octokit-installation-token',
+  //       expiresAt: futureExpirationDate,
+  //     };
+  //     mockedCreateAppAuth.mockReturnValueOnce(jest.fn().mockResolvedValue(mockAuth));
 
-      const token = await createGithubAppTokenOctokit(sampleCredentialsForApp.app!);
+  //     const token = await createGithubAppTokenOctokit(sampleCredentialsForApp.app!);
 
-      expect(createAppAuth).toHaveBeenCalledWith({
-        appId: Number(sampleCredentialsForApp.app!.appId),
-        privateKey: sampleCredentialsForApp.app!.privateKey,
-        installationId: Number(sampleCredentialsForApp.app!.installationId),
-      });
+  //     expect(createAppAuth).toHaveBeenCalledWith({
+  //       appId: Number(sampleCredentialsForApp.app!.appId),
+  //       privateKey: sampleCredentialsForApp.app!.privateKey,
+  //       installationId: Number(sampleCredentialsForApp.app!.installationId),
+  //     });
 
-      expect(token).toBe('octokit-installation-token');
-    });
+  //     expect(token).toBe('octokit-installation-token');
+  //   });
 
-    it('should use cached token if not expired', async () => {
-      await tokenCache.set('token', 'cached-octokit-token', Date.now() + 5 * 60 * 1000);
+  //   it('should use cached token if not expired', async () => {
+  //     await tokenCache.set('token', 'cached-octokit-token', Date.now() + 5 * 60 * 1000);
 
-      const token = await createGithubAppTokenOctokit(sampleCredentialsForApp.app!);
+  //     const token = await createGithubAppTokenOctokit(sampleCredentialsForApp.app!);
 
-      expect(token).toBe('cached-octokit-token');
-      // Ensure createAppAuth is not called
-      expect(createAppAuth).not.toHaveBeenCalled();
+  //     expect(token).toBe('cached-octokit-token');
+  //     // Ensure createAppAuth is not called
+  //     expect(createAppAuth).not.toHaveBeenCalled();
 
-      await tokenCache.clear();
-    });
+  //     await tokenCache.clear();
+  //   });
 
-    it('should throw InputError if appAuth fails to generate token', async () => {
-      // Mock createAppAuth to return incomplete auth
-      mockedCreateAppAuth.mockReturnValueOnce(jest.fn().mockResolvedValue({}));
+  //   it('should throw InputError if appAuth fails to generate token', async () => {
+  //     // Mock createAppAuth to return incomplete auth
+  //     mockedCreateAppAuth.mockReturnValueOnce(jest.fn().mockResolvedValue({}));
 
-      await expect(createGithubAppTokenOctokit(sampleCredentialsForApp.app!)).rejects.toThrow(
-        CreateGithubAppTokenError.wrapErrorMessage('Octokit Auth Failed'),
-      );
-    });
+  //     await expect(createGithubAppTokenOctokit(sampleCredentialsForApp.app!)).rejects.toThrow(
+  //       CreateGithubAppTokenError.wrapErrorMessage('Octokit Auth Failed'),
+  //     );
+  //   });
 
-    it('should throw InputError if credentials are missing', async () => {
-      const incompleteCredentials = {
-        appId: '123456',
-        // appCredentials is missing
-        privateKey: '-----BEGIN PRIVATE KEY-----\n...',
-      };
+  //   it('should throw InputError if credentials are missing', async () => {
+  //     const incompleteCredentials = {
+  //       appId: '123456',
+  //       // appCredentials is missing
+  //       privateKey: '-----BEGIN PRIVATE KEY-----\n...',
+  //     };
 
-      await expect(createGithubAppTokenOctokit(incompleteCredentials as AppCredentials)).rejects.toThrow(
-        errorMessage_MissingAppCredentialsKeys,
-      );
-    });
-  });
+  //     await expect(createGithubAppTokenOctokit(incompleteCredentials as AppCredentials)).rejects.toThrow(
+  //       errorMessage_MissingAppCredentialsKeys,
+  //     );
+  //   });
+  // });
 
   describe('createGithubToken', () => {
     let createGithubAppTokenSpy: any;

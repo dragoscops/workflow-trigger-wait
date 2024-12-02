@@ -1,4 +1,4 @@
-import {createAppAuth} from '@octokit/auth-app';
+// import {createAppAuth} from '@octokit/auth-app';
 import axios, {AxiosInstance, AxiosRequestConfig} from 'axios';
 import {createPrivateKey} from 'crypto';
 import {SignJWT} from 'jose';
@@ -111,41 +111,41 @@ export async function createGithubAppTokenRaw(credentials: AppCredentials): Prom
   }
 }
 
-/**
- * Create a GitHub App installation token using Octokit.
- *
- * @param credentials - The GitHub App credentials.
- * @returns A valid GitHub installation token.
- */
-export async function createGithubAppTokenOctokit(credentials: AppCredentials): Promise<string> {
-  const {appId, installationId, privateKey} = credentials;
-  if (!appId || !installationId || !privateKey) {
-    throw new InputError(errorMessage_MissingAppCredentialsKeys);
-  }
+// /**
+//  * Create a GitHub App installation token using Octokit.
+//  *
+//  * @param credentials - The GitHub App credentials.
+//  * @returns A valid GitHub installation token.
+//  */
+// export async function createGithubAppTokenOctokit(credentials: AppCredentials): Promise<string> {
+//   const {appId, installationId, privateKey} = credentials;
+//   if (!appId || !installationId || !privateKey) {
+//     throw new InputError(errorMessage_MissingAppCredentialsKeys);
+//   }
 
-  // Check if a valid token is already cached
-  const token = await tokenCache.get<string>('token');
-  if (token) {
-    return token;
-  }
+//   // Check if a valid token is already cached
+//   const token = await tokenCache.get<string>('token');
+//   if (token) {
+//     return token;
+//   }
 
-  // Initialize Octokit with App authentication
-  const auth = createAppAuth({
-    appId: Number(appId), // Ensure appId is a number
-    privateKey,
-    installationId: Number(installationId), // Ensure installationId is a number
-  });
+//   // Initialize Octokit with App authentication
+//   const auth = createAppAuth({
+//     appId: Number(appId), // Ensure appId is a number
+//     privateKey,
+//     installationId: Number(installationId), // Ensure installationId is a number
+//   });
 
-  // Authenticate as the installation and get the token
-  const authentication = await auth({type: 'installation'});
-  if (!authentication.token || !authentication.expiresAt) {
-    throw new CreateGithubAppTokenError(CreateGithubAppTokenError.wrapErrorMessage('Octokit Auth Failed'));
-  }
-  // set a 1 minute less expiration time for the cache
-  tokenCache.set('token', authentication.token, new Date(authentication.expiresAt).getTime() - 60 * 1000);
+//   // Authenticate as the installation and get the token
+//   const authentication = await auth({type: 'installation'});
+//   if (!authentication.token || !authentication.expiresAt) {
+//     throw new CreateGithubAppTokenError(CreateGithubAppTokenError.wrapErrorMessage('Octokit Auth Failed'));
+//   }
+//   // set a 1 minute less expiration time for the cache
+//   tokenCache.set('token', authentication.token, new Date(authentication.expiresAt).getTime() - 60 * 1000);
 
-  return authentication.token;
-}
+//   return authentication.token;
+// }
 
 export async function createGithubAppToken(credentials: AppCredentials): Promise<string> {
   return createGithubAppTokenRaw(credentials);

@@ -3,8 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createGithubClient = exports.createGithubToken = exports.createGithubAppToken = exports.createGithubAppTokenOctokit = exports.createGithubAppTokenRaw = exports.CreateGithubAppTokenError = exports.requestInstallationToken = exports.FailedToRequestInstallationTokenError = exports.tokenCache = void 0;
-const auth_app_1 = require("@octokit/auth-app");
+exports.createGithubClient = exports.createGithubToken = exports.createGithubAppToken = exports.createGithubAppTokenRaw = exports.CreateGithubAppTokenError = exports.requestInstallationToken = exports.FailedToRequestInstallationTokenError = exports.tokenCache = void 0;
 const axios_1 = __importDefault(require("axios"));
 const crypto_1 = require("crypto");
 const jose_1 = require("jose");
@@ -92,28 +91,6 @@ async function createGithubAppTokenRaw(credentials) {
     }
 }
 exports.createGithubAppTokenRaw = createGithubAppTokenRaw;
-async function createGithubAppTokenOctokit(credentials) {
-    const { appId, installationId, privateKey } = credentials;
-    if (!appId || !installationId || !privateKey) {
-        throw new utils_1.InputError(utils_1.errorMessage_MissingAppCredentialsKeys);
-    }
-    const token = await exports.tokenCache.get('token');
-    if (token) {
-        return token;
-    }
-    const auth = (0, auth_app_1.createAppAuth)({
-        appId: Number(appId),
-        privateKey,
-        installationId: Number(installationId),
-    });
-    const authentication = await auth({ type: 'installation' });
-    if (!authentication.token || !authentication.expiresAt) {
-        throw new CreateGithubAppTokenError(CreateGithubAppTokenError.wrapErrorMessage('Octokit Auth Failed'));
-    }
-    exports.tokenCache.set('token', authentication.token, new Date(authentication.expiresAt).getTime() - 60 * 1000);
-    return authentication.token;
-}
-exports.createGithubAppTokenOctokit = createGithubAppTokenOctokit;
 async function createGithubAppToken(credentials) {
     return createGithubAppTokenRaw(credentials);
 }
