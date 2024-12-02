@@ -108,12 +108,12 @@ async function createGithubToken(credentials) {
     else {
         throw new utils_1.InputError('Invalid credentials: No token or app credentials provided.');
     }
+    (0, utils_1.doDebug)({ credentials }, '[createGithubToken]', token);
     return token;
 }
 exports.createGithubToken = createGithubToken;
 async function createGithubClient(credentials) {
     const token = await createGithubToken(credentials);
-    (0, utils_1.doDebug)({}, '[createGithubClient]', token);
     return axios_1.default.create({
         baseURL: 'https://api.github.com',
         headers: {

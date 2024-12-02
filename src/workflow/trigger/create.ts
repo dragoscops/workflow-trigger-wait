@@ -16,6 +16,7 @@ export async function createWorkflow(options: Options): Promise<void> {
   core.info(`Calling ${workflowUrl}@${ref}`);
   try {
     const client = await createGithubClient(credentials);
+    doDebug(options, '[createGithubClient]', client);
     const response = await client.post(workflowUrl, {
       ref,
       inputs,

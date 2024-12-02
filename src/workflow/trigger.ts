@@ -13,7 +13,6 @@ export class TriggerWorkflowError extends GenericError {
 
 export async function triggerWorkflow(options: Options): Promise<string> {
   const {repo, workflowId} = options;
-
   if (!workflowId || !repo) {
     throw new InvalidWorkflowError(`Invalid workflowId or repo: ${workflowId} / ${repo}`);
   }

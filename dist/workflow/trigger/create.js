@@ -38,6 +38,7 @@ async function createWorkflow(options) {
     core.info(`Calling ${workflowUrl}@${ref}`);
     try {
         const client = await (0, github_client_1.createGithubClient)(credentials);
+        (0, utils_1.doDebug)(options, '[createGithubClient]', client);
         const response = await client.post(workflowUrl, {
             ref,
             inputs,
