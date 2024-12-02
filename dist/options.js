@@ -72,6 +72,12 @@ function processOptions() {
     if (!credentials.token && !credentials.app) {
         throw new utils_1.InputError(`You must provide either a 'token' or 'app' in credentials.`);
     }
+    if (credentials.app) {
+        if (!credentials.app?.appId || !credentials.app?.installationId || !credentials.app?.privateKey) {
+            throw new utils_1.InputError('Invalid Github App credentials');
+        }
+        credentials.app.privateKey = Buffer.from(credentials.app?.privateKey, 'base64').toString('utf-8');
+    }
     const options = {
         credentials,
         repo: core.getInput('repo'),
