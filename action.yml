@@ -1,5 +1,5 @@
-name: "Trigger and Wait for Workflows"
-description: "Triggers one or more workflows in a different repository and waits for them to end"
+name: 'Trigger and Wait for Workflows'
+description: 'Triggers one or more workflows in a different repository and waits for them to end'
 inputs:
   credentials:
     description: |
@@ -13,34 +13,34 @@ inputs:
         '{"app": {"appId": "12345", "installationId": "67890", "privateKey": "your-private-key"}}'
     required: true
   repo:
-    description: "Repository to trigger workflows in (format: owner/repo)"
+    description: 'Repository to trigger workflows in (format: owner/repo)'
     required: false
   workflow_id:
-    description: "ID or filename of the workflow to trigger"
+    description: 'ID or filename of the workflow to trigger'
     required: false
   ref:
-    description: "Git reference to use for triggering the workflow"
+    description: 'Git reference to use for triggering the workflow'
     required: false
     default: main
   inputs:
-    description: "JSON string of inputs to pass to the workflow"
+    description: 'JSON string of inputs to pass to the workflow'
     required: false
     default: |
       {}
   wait_interval:
-    description: "Interval in seconds to wait between polling workflow status"
+    description: 'Interval in seconds to wait between polling workflow status'
     required: false
     default: 10s
   timeout:
-    description: "Maximum time to wait for the workflow to complete"
+    description: 'Maximum time to wait for the workflow to complete'
     required: false
     default: 1h
   action:
-    description: "Action to perform: trigger-and-wait, trigger-only, wait-only"
+    description: 'Action to perform: trigger-and-wait, trigger-only, wait-only'
     required: false
     default: trigger-and-wait
   run_id:
-    description: "Run ID of the workflow to wait for (required for wait-only action)"
+    description: 'Run ID of the workflow to wait for (required for wait-only action)'
     required: false
   no_throw:
     description: |
@@ -49,9 +49,9 @@ inputs:
     required: false
     default: 'no'
   debug:
-    description: "Print debug information"
+    description: 'Print debug information'
     required: false
     default: 'no'
 runs:
-  using: "node20"
-  main: "dist/index.js"
+  using: 'node20'
+  main: 'dist/index.js'
