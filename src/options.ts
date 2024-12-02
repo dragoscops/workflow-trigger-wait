@@ -86,7 +86,7 @@ export function processOptions() {
     if (!credentials.app?.appId || !credentials.app?.installationId || !credentials.app?.privateKey) {
       throw new InputError('Invalid Github App credentials');
     }
-    credentials.app.privateKey = Buffer.from(credentials.app?.privateKey, 'base64').toString('utf-8');
+    credentials.app.privateKey = credentials.app.privateKey.replace(/\\n/g, '\n');
   }
 
   const options = {
