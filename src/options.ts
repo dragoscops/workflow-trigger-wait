@@ -13,7 +13,6 @@ export type ActionType = (typeof actionTypes)[number];
 
 export type AppCredentials = {
   appId: string;
-  installationId: string;
   privateKey: string;
 };
 
@@ -62,7 +61,6 @@ export const defaultOptionsForApp: Options = {
   credentials: {
     app: {
       appId: '123456',
-      installationId: '78910',
       privateKey: '-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhki...IDAQAB\n-----END PRIVATE KEY-----',
     },
   },
@@ -82,10 +80,8 @@ export function processOptions() {
     throw new InputError(`You must provide either a 'token' or 'app' in credentials.`);
   }
 
-  if (credentials.app) {
-    if (!credentials.app?.appId || !credentials.app?.installationId || !credentials.app?.privateKey) {
-      throw new InputError('Invalid Github App credentials');
-    }
+  if (credentials.app && (!credentials.app?.appId || !credentials.app?.privateKey)) {
+    throw new InputError('Invalid Github App credentials');
   }
 
   const options = {

@@ -14,9 +14,8 @@ module.exports = {
     'plugin:import/recommended',
     'plugin:import/warnings',
     'plugin:import/typescript',
-    'plugin:jest/recommended',
   ],
-  plugins: ['@typescript-eslint', 'jest', 'sonarjs', 'prettier', 'import'],
+  plugins: ['@typescript-eslint', 'sonarjs', 'prettier', 'import'],
   overrides: [
     {
       env: {

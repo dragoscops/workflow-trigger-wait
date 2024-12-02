@@ -2,6 +2,7 @@
 /* eslint-disable max-lines-per-function */
 import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
+import {describe, it, expect, beforeEach, afterEach} from 'vitest';
 import {waitForWorkflow} from './wait';
 import {GithubApiUrl} from '../github-api-url';
 import {defaultOptions} from '../options';
@@ -31,7 +32,6 @@ describe('waitForWorkflow', () => {
       conclusion: 'success',
     });
 
-    // eslint-disable-next-line jest/no-conditional-expect
     await expect(waitForWorkflow(options)).resolves.toBeUndefined();
 
     // Verify GET requests
@@ -47,7 +47,6 @@ describe('waitForWorkflow', () => {
       conclusion: 'failure',
     });
 
-    // eslint-disable-next-line jest/no-conditional-expect
     await expect(waitForWorkflow(options)).rejects.toThrow('Workflow run 12345 failed with conclusion: failure');
 
     // Verify GET request
@@ -61,7 +60,6 @@ describe('waitForWorkflow', () => {
       status: 'in_progress',
     });
 
-    // eslint-disable-next-line jest/no-conditional-expect
     await expect(
       waitForWorkflow({...defaultOptions, runId: '12345', timeout: 1000, waitInterval: 500}),
     ).rejects.toThrow('Timeout waiting for workflow run 12345 to complete.');
@@ -75,7 +73,6 @@ describe('waitForWorkflow', () => {
     // Mock a failed GET request
     mock.onGet(mockRunStatusUrl).reply(500, {message: 'Internal Server Error'});
 
-    // eslint-disable-next-line jest/no-conditional-expect
     await expect(waitForWorkflow(options)).rejects.toThrow('Request failed with status code 500');
 
     expect(mock.history.get.length).toBe(1); // Only one polling attempt
@@ -86,7 +83,6 @@ describe('waitForWorkflow', () => {
     // Mock a network error
     mock.onGet(mockRunStatusUrl).networkError();
 
-    // eslint-disable-next-line jest/no-conditional-expect
     await expect(waitForWorkflow(options)).rejects.toThrow('Network Error');
 
     // Verify GET request

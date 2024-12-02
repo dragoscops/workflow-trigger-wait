@@ -23,8 +23,4 @@ export class GithubApiUrl {
   runsList({repo}: Options): string {
     return `/repos/${repo}/actions/runs`;
   }
-
-  appGenerateInstallationAccessToken({credentials}: Options): string {
-    return `/app/installations/${credentials.app!.installationId}/access_tokens`;
-  }
 }

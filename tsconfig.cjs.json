@@ -1,7 +1,6 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    // configured build for CJS
     "target": "ES2022",
     "lib": ["ES2022", "DOM"],
     "module": "CommonJS",

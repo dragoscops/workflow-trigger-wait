@@ -3,96 +3,38 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createGithubClient = exports.createGithubToken = exports.createGithubAppToken = exports.createGithubAppTokenRaw = exports.CreateGithubAppTokenError = exports.requestInstallationToken = exports.FailedToRequestInstallationTokenError = exports.tokenCache = void 0;
+exports.createGithubClient = exports.createGithubToken = exports.createGithubAppToken = exports.CreateGithubAppTokenError = exports.tokenCache = void 0;
+const auth_app_1 = require("@octokit/auth-app");
 const axios_1 = __importDefault(require("axios"));
-const crypto_1 = require("crypto");
-const jose_1 = require("jose");
 const utils_1 = require("./utils");
 const cache_manager_1 = require("cache-manager");
 const keyv_1 = __importDefault(require("keyv"));
-const github_api_url_1 = require("./github-api-url");
 exports.tokenCache = (0, cache_manager_1.createCache)({
     stores: [new keyv_1.default()],
 });
-class FailedToRequestInstallationTokenError extends utils_1.GenericError {
-    runConclusion = 'failed_to_request_app_token';
-    static wrapErrorMessage(error) {
-        return `Failed to request installation token: ${(0, utils_1.errorMessage)(error)}`;
-    }
-}
-exports.FailedToRequestInstallationTokenError = FailedToRequestInstallationTokenError;
-async function requestInstallationToken(jwtToken, credentials) {
-    const endpoint = github_api_url_1.GithubApiUrl.getInstance().appGenerateInstallationAccessToken({
-        credentials: { app: credentials },
-    });
-    const url = `https://api.github.com${endpoint}`;
-    const config = {
-        headers: {
-            Authorization: `Bearer ${jwtToken}`,
-            Accept: 'application/vnd.github+json',
-        },
-    };
-    try {
-        const response = await axios_1.default.post(url, {}, config);
-        if (response.status !== 201) {
-            throw new Error(`Unexpected response status: ${response.status}`);
-        }
-        const { token, expires_at } = response.data;
-        if (!token || !expires_at) {
-            throw new Error('Token or expiration time not found in the response.');
-        }
-        return {
-            token,
-            expiresAt: new Date(expires_at).getTime(),
-        };
-    }
-    catch (error) {
-        throw new FailedToRequestInstallationTokenError(FailedToRequestInstallationTokenError.wrapErrorMessage(error), {
-            cause: error,
-        });
-    }
-}
-exports.requestInstallationToken = requestInstallationToken;
 class CreateGithubAppTokenError extends utils_1.GenericError {
-    runConclusion = 'failed_to_create_github_app_token';
+    runConclusion = 'failed_to_create_app_token';
     static wrapErrorMessage(error) {
-        return `Failed to generate Github App Token: ${(0, utils_1.errorMessage)(error)}`;
+        return `Failed to create app token: ${(0, utils_1.errorMessage)(error)}`;
     }
 }
 exports.CreateGithubAppTokenError = CreateGithubAppTokenError;
-async function createGithubAppTokenRaw(credentials) {
-    const { appId, installationId, privateKey } = credentials;
-    if (!appId || !installationId || !privateKey) {
-        throw new utils_1.InputError(utils_1.errorMessage_MissingAppCredentialsKeys);
-    }
-    const tokenValue = await exports.tokenCache.get('token');
-    if (tokenValue) {
-        return tokenValue;
-    }
-    const key = (0, crypto_1.createPrivateKey)({
-        key: privateKey.replace(/\\n/g, '\n'),
-        format: 'pem',
-    });
-    try {
-        const now = Date.now();
-        const jwt = await new jose_1.SignJWT({
-            iat: Math.floor(now / 1000) - 60,
-            exp: Math.floor(now / 1000) + 600,
-            iss: appId,
-        })
-            .setProtectedHeader({ alg: 'RS256' })
-            .sign(key);
-        const { token, expiresAt } = await requestInstallationToken(jwt, credentials);
-        exports.tokenCache.set('token', token, expiresAt - 60 * 1000);
+async function createGithubAppToken(credentials) {
+    const { appId, privateKey } = credentials;
+    const token = await exports.tokenCache.get('token');
+    if (token) {
         return token;
     }
-    catch (error) {
-        throw new CreateGithubAppTokenError(CreateGithubAppTokenError.wrapErrorMessage(error), { cause: error });
+    const auth = (0, auth_app_1.createAppAuth)({
+        appId: Number(appId),
+        privateKey,
+    });
+    const authentication = await auth({ type: 'installation' });
+    if (!authentication.token || !authentication.expiresAt) {
+        throw new CreateGithubAppTokenError(CreateGithubAppTokenError.wrapErrorMessage('Octokit Auth Failed'));
     }
-}
-exports.createGithubAppTokenRaw = createGithubAppTokenRaw;
-async function createGithubAppToken(credentials) {
-    return createGithubAppTokenRaw(credentials);
+    exports.tokenCache.set('token', authentication.token, new Date(authentication.expiresAt).getTime() - 60 * 1000);
+    return authentication.token;
 }
 exports.createGithubAppToken = createGithubAppToken;
 async function createGithubToken(credentials) {
@@ -102,7 +44,7 @@ async function createGithubToken(credentials) {
         token = credentials.token;
     }
     else if (credentials.app) {
-        (0, utils_1.doDebug)({ credentials }, '[createGithubToken(appp)]');
+        (0, utils_1.doDebug)({ credentials }, '[createGithubToken(app)]');
         token = await createGithubAppToken(credentials.app);
     }
     else {

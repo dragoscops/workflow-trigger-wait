@@ -2,7 +2,7 @@
 import '@actions/core';
 import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
-
+import {describe, it, expect, beforeEach, afterEach} from 'vitest';
 import {createWorkflow} from './create';
 import {GithubApiUrl} from '../../github-api-url';
 import {defaultOptions} from '../../options';

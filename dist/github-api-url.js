@@ -19,8 +19,5 @@ class GithubApiUrl {
     runsList({ repo }) {
         return `/repos/${repo}/actions/runs`;
     }
-    appGenerateInstallationAccessToken({ credentials }) {
-        return `/app/installations/${credentials.app.installationId}/access_tokens`;
-    }
 }
 exports.GithubApiUrl = GithubApiUrl;

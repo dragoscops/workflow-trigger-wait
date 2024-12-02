@@ -3,7 +3,7 @@
 import axios from 'axios';
 import '@actions/core';
 import MockAdapter from 'axios-mock-adapter';
-
+import {describe, it, expect, beforeEach, afterEach} from 'vitest';
 import {lastUncompletedRunAttempt, lastUncompletedRun} from './list-runs';
 import {defaultOptions} from '../../options';
 import {GithubApiUrl} from '../../github-api-url';
