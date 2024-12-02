@@ -111,6 +111,7 @@ async function createGithubToken(credentials) {
 exports.createGithubToken = createGithubToken;
 async function createGithubClient(credentials) {
     const token = await createGithubToken(credentials);
+    (0, utils_1.doDebug)({}, '[createGithubClient]', token);
     return axios_1.default.create({
         baseURL: 'https://api.github.com',
         headers: {

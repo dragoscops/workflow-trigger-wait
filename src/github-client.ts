@@ -2,7 +2,7 @@
 import axios, {AxiosInstance, AxiosRequestConfig} from 'axios';
 import {createPrivateKey} from 'crypto';
 import {SignJWT} from 'jose';
-import {errorMessage, errorMessage_MissingAppCredentialsKeys, GenericError, InputError} from './utils';
+import {doDebug, errorMessage, errorMessage_MissingAppCredentialsKeys, GenericError, InputError} from './utils';
 import {createCache} from 'cache-manager';
 import Keyv from 'keyv';
 import {GithubApiUrl} from './github-api-url';
@@ -167,6 +167,7 @@ export async function createGithubToken(credentials: Credentials): Promise<strin
 
 export async function createGithubClient(credentials: Credentials): Promise<AxiosInstance> {
   const token = await createGithubToken(credentials);
+  doDebug({} as Options, '[createGithubClient]', token);
   return axios.create({
     baseURL: 'https://api.github.com',
     headers: {
