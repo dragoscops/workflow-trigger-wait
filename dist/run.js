@@ -53,7 +53,6 @@ async function run() {
 exports.default = run;
 async function runAction(options) {
     const { action } = options;
-    console.log(options);
     if (action.includes('trigger')) {
         options.runId = await (0, trigger_1.triggerWorkflow)(options);
     }

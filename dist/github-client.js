@@ -98,9 +98,11 @@ exports.createGithubAppToken = createGithubAppToken;
 async function createGithubToken(credentials) {
     let token;
     if (credentials.token) {
+        (0, utils_1.doDebug)({ credentials }, '[createGithubToken(token)]');
         token = credentials.token;
     }
     else if (credentials.app) {
+        (0, utils_1.doDebug)({ credentials }, '[createGithubToken(appp)]');
         token = await createGithubAppToken(credentials.app);
     }
     else {

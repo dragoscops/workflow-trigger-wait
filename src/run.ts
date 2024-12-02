@@ -28,12 +28,9 @@ export default async function run(): Promise<void> {
 
 export async function runAction(options: Options) {
   const {action} = options;
-  console.log(options);
-
   if (action.includes('trigger')) {
     options.runId = await triggerWorkflow(options);
   }
-
   if (action.includes('wait')) {
     if (!options.runId) {
       throw new InputError(`run_id is required for action: wait-only`);

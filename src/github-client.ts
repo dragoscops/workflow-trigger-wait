@@ -153,10 +153,11 @@ export async function createGithubAppToken(credentials: AppCredentials): Promise
 
 export async function createGithubToken(credentials: Credentials): Promise<string> {
   let token: string;
-
   if (credentials.token) {
+    doDebug({credentials} as Options, '[createGithubToken(token)]');
     token = credentials.token; // Use the provided token
   } else if (credentials.app) {
+    doDebug({credentials} as Options, '[createGithubToken(appp)]');
     token = await createGithubAppToken(credentials.app); // Placeholder for token generation logic
   } else {
     throw new InputError('Invalid credentials: No token or app credentials provided.');
