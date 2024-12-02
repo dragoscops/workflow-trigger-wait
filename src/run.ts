@@ -1,6 +1,6 @@
 import * as core from '@actions/core';
 import {Options, processOptions} from './options';
-import {silentFail, errorMessage, GenericError, InputError} from './utils';
+import {doDebug, silentFail, errorMessage, GenericError, InputError} from './utils';
 import {triggerWorkflow} from './workflow/trigger';
 import {waitForWorkflow} from './workflow/wait';
 
@@ -17,6 +17,7 @@ export default async function run(): Promise<void> {
     core.setOutput('run_conclusion', conclusion); // Always set the conclusion
     core.info(`Run Conclusion: ${conclusion}`);
     core.info(`Error: ${errorMessage(err)}`);
+    doDebug(options, '[runAction]', err);
     if (silentFail(options.noThrow)) {
       core.warning('Silent fail enabled. Suppressing action failure.');
     } else {

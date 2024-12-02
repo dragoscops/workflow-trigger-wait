@@ -41,6 +41,7 @@ async function run() {
         core.setOutput('run_conclusion', conclusion);
         core.info(`Run Conclusion: ${conclusion}`);
         core.info(`Error: ${(0, utils_1.errorMessage)(err)}`);
+        (0, utils_1.doDebug)(options, '[runAction]', err);
         if ((0, utils_1.silentFail)(options.noThrow)) {
             core.warning('Silent fail enabled. Suppressing action failure.');
         }

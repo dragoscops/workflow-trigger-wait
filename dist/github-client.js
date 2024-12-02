@@ -70,7 +70,7 @@ async function createGithubAppTokenRaw(credentials) {
         return tokenValue;
     }
     const key = (0, crypto_1.createPrivateKey)({
-        key: privateKey,
+        key: privateKey.replace(/\\n/g, '\n'),
         format: 'pem',
     });
     try {

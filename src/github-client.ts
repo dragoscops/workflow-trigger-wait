@@ -87,7 +87,7 @@ export async function createGithubAppTokenRaw(credentials: AppCredentials): Prom
 
   // Generate a new JWT using jose
   const key = createPrivateKey({
-    key: privateKey,
+    key: privateKey.replace(/\\n/g, '\n'),
     format: 'pem',
   });
 
