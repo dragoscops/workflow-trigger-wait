@@ -38,7 +38,7 @@ jobs:
     steps:
       - name: "[1] (token) Run Simple Trigger And Wait"
         id: run-simple-trigger-and-wait
-        uses: dragoscops/workflow-trigger-wait@main
+        uses: dragoscops/workflow-trigger-wait@github_app_token
         with:
           credentials: '{ "token": "${{ secrets.GH_TOKEN }}" }'
           repo: ${{ github.repository }}
@@ -57,7 +57,7 @@ jobs:
 
       - name: "[2] (token) Run Trigger Only"
         id: run-trigger-only
-        uses: dragoscops/workflow-trigger-wait@main
+        uses: dragoscops/workflow-trigger-wait@github_app_token
         with:
           credentials: '{ "token": "${{ secrets.GH_TOKEN }}" }'
           repo: ${{ github.repository }}
@@ -77,7 +77,7 @@ jobs:
 
       - name: "[3] (token) Run Wait Only"
         id: run-wait-only
-        uses: dragoscops/workflow-trigger-wait@main
+        uses: dragoscops/workflow-trigger-wait@github_app_token
         with:
           credentials: '{ "token": "${{ secrets.GH_TOKEN }}" }'
           repo: ${{ github.repository }}
@@ -97,7 +97,7 @@ jobs:
 
       - name: "[4] (token) Run Timeout Trigger And Wait"
         id: run-throw-trigger-and-wait
-        uses: dragoscops/workflow-trigger-wait@main
+        uses: dragoscops/workflow-trigger-wait@github_app_token
         with:
           credentials: '{ "token": "${{ secrets.GH_TOKEN }}" }'
           repo: ${{ github.repository }}
@@ -117,7 +117,7 @@ jobs:
 
       - name: "[5] (token) Run Timeout Trigger And Wait"
         id: run-timeout-trigger-and-wait
-        uses: dragoscops/workflow-trigger-wait@main
+        uses: dragoscops/workflow-trigger-wait@github_app_token
         with:
           credentials: '{ "token": "${{ secrets.GH_TOKEN }}" }'
           repo: ${{ github.repository }}
@@ -137,7 +137,7 @@ jobs:
 
       - name: "[6] (github-app) Run Simple Trigger And Wait"
         id: run-app-trigger-and-wait
-        uses: dragoscops/workflow-trigger-wait@main
+        uses: dragoscops/workflow-trigger-wait@github_app_token
         with:
           credentials: |
             {
@@ -163,7 +163,7 @@ jobs:
 
       # - name: "[7] (github-app) Run Simple Trigger And Wait"
       #   id: run-app-token-regen
-      #   uses: dragoscops/workflow-trigger-wait@main
+      #   uses: dragoscops/workflow-trigger-wait@github_app_token
       #   with:
       #     credentials: |
       #       {
