@@ -179,7 +179,7 @@ export async function authenticateGithubAppByRepository(
   repo: string,
   options: Options,
 ): Promise<InstallationAccessTokenAuthentication> {
-  const response = await request('GET /users/{owner}/{repo}/installation', {
+  const response = await request('GET /repos/{owner}/{repo}/installation', {
     owner,
     repo,
     request: {hook: auth.hook},

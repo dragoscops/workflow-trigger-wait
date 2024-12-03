@@ -126,7 +126,7 @@ export async function authenticateGithubAppByOwner(auth, request, owner, options
     });
 }
 export async function authenticateGithubAppByRepository(auth, request, owner, repo, options) {
-    const response = await request('GET /users/{owner}/{repo}/installation', {
+    const response = await request('GET /repos/{owner}/{repo}/installation', {
         owner,
         repo,
         request: { hook: auth.hook },
