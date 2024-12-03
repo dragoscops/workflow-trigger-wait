@@ -174,7 +174,7 @@ jobs:
             {
               "app": {
                 "appId": "${{ secrets.GH_APP_ID }}",
-                "privateKey": "${{ secrets.GH_APP_PRIVATE_KEY }}",
+                "privateKey": "in-env",
                 "owner": "${{ github.repository_owner }}"
               }
             }
@@ -216,9 +216,6 @@ jobs:
           timeout: '60000'
           action: 'trigger-and-wait'
           debug: 'yes'
-        env:
-          GITHUB_APP_PRIVATE_KEY: |
-            ${{ secrets.GH_APP_PRIVATE_KEY_RAW }}
 
       - name: '[8] (github-app) Verify Outputs'
         run: |
@@ -245,9 +242,6 @@ jobs:
           timeout: '60000'
           action: 'trigger-and-wait'
           debug: 'yes'
-        env:
-          GITHUB_APP_PRIVATE_KEY: |
-            ${{ secrets.GH_APP_PRIVATE_KEY_RAW }}
 
       - name: '[9] (github-app) Verify Outputs'
         run: |
@@ -273,9 +267,6 @@ jobs:
           timeout: '60000'
           action: 'trigger-and-wait'
           debug: 'yes'
-        env:
-          GITHUB_APP_PRIVATE_KEY: |
-            ${{ secrets.GH_APP_PRIVATE_KEY_RAW }}
 
       - name: '[10] (github-app) Verify Outputs'
         run: |
