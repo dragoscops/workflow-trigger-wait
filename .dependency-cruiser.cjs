@@ -125,20 +125,7 @@ module.exports = {
     },
 
     /* rules you might want to tweak for your specific situation: */
-    {
-      name: 'not-to-test',
-      comment:
-        "This module depends on code within a folder that should only contain tests. As tests don't " +
-        "implement functionality this is odd. Either you're writing a test outside the test folder " +
-        "or there's something in the test folder that isn't a test.",
-      severity: 'error',
-      from: {
-        pathNot: '^(test)'
-      },
-      to: {
-        path: '^(test)'
-      }
-    },
+    
     {
       name: 'not-to-spec',
       comment:
@@ -282,7 +269,7 @@ module.exports = {
        defaults to './tsconfig.json'.
      */
     tsConfig: {
-      fileName: 'tsconfig.base.json'
+      fileName: 'tsconfig.json'
     },
 
     /* Webpack configuration to use to get resolve options from.
@@ -338,13 +325,9 @@ module.exports = {
          up the most expensive step in dependency cruising (module resolution)
           quite a bit.
        */
-      extensions: [".ts"],
+      // extensions: [".js", ".jsx", ".ts", ".tsx", ".d.ts"],
       /* What to consider a 'main' field in package.json */
-      
-      // if you migrate to ESM (or are in an ESM environment already) you will want to
-      // have "module" in the list of mainFields, like so:
-      // mainFields: ["module", "main", "types", "typings"],
-      mainFields: ["main", "types", "typings"],
+      mainFields: ["module", "main", "types", "typings"],
       /*
          A list of alias fields in package.jsons
          See [this specification](https://github.com/defunctzombie/package-browser-field-spec) and
@@ -403,4 +386,4 @@ module.exports = {
     }
   }
 };
-// generated: dependency-cruiser@16.3.2 on 2024-05-13T22:32:22.368Z
+// generated: dependency-cruiser@16.3.2 on 2024-12-03T00:00:51.424Z

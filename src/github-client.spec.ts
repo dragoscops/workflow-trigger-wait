@@ -1,10 +1,9 @@
 // github-client.test.ts
 
-import {describe, it, expect, beforeEach, vi} from 'vitest';
-import {createGithubToken} from './github-client';
-import {Credentials, AppCredentials} from './options';
-import axios from 'axios';
 import {createAppAuth} from '@octokit/auth-app';
+import {describe, it, expect, beforeEach, vi} from 'vitest';
+import {createGithubToken} from './github-client.js';
+import {Credentials, AppCredentials} from './options.js';
 
 // Mock dependencies using Vitest
 vi.mock('axios');

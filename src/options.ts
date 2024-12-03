@@ -1,7 +1,7 @@
 import * as core from '@actions/core';
 import parseDuration from 'parse-duration';
 
-import {errorMessage, InputError} from './utils';
+import {errorMessage, InputError} from './utils.js';
 
 export const actionTriggerAndWait = 'trigger-and-wait';
 export const actionTriggerOnly = 'trigger-only';

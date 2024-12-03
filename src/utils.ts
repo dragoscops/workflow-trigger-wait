@@ -1,4 +1,4 @@
-import {Options} from './options';
+import {Options} from './options.js';
 
 export class GenericError extends Error {
   runConclusion = 'unknown';

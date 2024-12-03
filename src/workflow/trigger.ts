@@ -1,7 +1,7 @@
-import {createWorkflow} from './trigger/create';
-import {lastUncompletedRun} from './trigger/list-runs';
-import {Options} from '../options';
-import {doDebug, errorMessage, GenericError} from '../utils';
+import {createWorkflow} from './trigger/create.js';
+import {lastUncompletedRun} from './trigger/list-runs.js';
+import {Options} from '../options.js';
+import {doDebug, errorMessage, GenericError} from '../utils.js';
 
 export class InvalidWorkflowError extends GenericError {
   runConclusion = 'invalid_workflow';

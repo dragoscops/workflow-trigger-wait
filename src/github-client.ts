@@ -1,9 +1,9 @@
 import {createAppAuth} from '@octokit/auth-app';
 import axios, {AxiosInstance} from 'axios';
-import {doDebug, errorMessage, GenericError, InputError} from './utils';
 import {createCache} from 'cache-manager';
 import Keyv from 'keyv';
-import {AppCredentials, Credentials, Options} from './options';
+import {doDebug, errorMessage, GenericError, InputError} from './utils.js';
+import {AppCredentials, Credentials, Options} from './options.js';
 
 export const tokenCache = createCache({
   stores: [new Keyv()],

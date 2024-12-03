@@ -1,8 +1,8 @@
 import * as core from '@actions/core';
-import {Options, processOptions} from './options';
-import {doDebug, silentFail, errorMessage, GenericError, InputError} from './utils';
-import {triggerWorkflow} from './workflow/trigger';
-import {waitForWorkflow} from './workflow/wait';
+import {Options, processOptions} from './options.js';
+import {doDebug, silentFail, errorMessage, GenericError, InputError} from './utils.js';
+import {triggerWorkflow} from './workflow/trigger.js';
+import {waitForWorkflow} from './workflow/wait.js';
 
 export default async function run(): Promise<void> {
   const options = processOptions();

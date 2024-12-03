@@ -1,8 +1,5 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.GithubApiUrl = void 0;
 let instance;
-class GithubApiUrl {
+export class GithubApiUrl {
     static getInstance() {
         if (!instance) {
             instance = new GithubApiUrl();
@@ -20,4 +17,3 @@ class GithubApiUrl {
         return `/repos/${repo}/actions/runs`;
     }
 }
-exports.GithubApiUrl = GithubApiUrl;

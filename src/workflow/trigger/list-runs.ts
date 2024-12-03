@@ -1,10 +1,10 @@
 import * as core from '@actions/core';
 
-import {createGithubClient} from '../../github-client';
-import {Options} from '../../options';
-import {doDebug, sleep, errorMessage, GenericError} from '../../utils';
-import {GithubApiUrl} from '../../github-api-url';
-import {GithubUrl} from '../../github-url';
+import {createGithubClient} from '../../github-client.js';
+import {Options} from '../../options.js';
+import {doDebug, sleep, errorMessage, GenericError} from '../../utils.js';
+import {GithubApiUrl} from '../../github-api-url.js';
+import {GithubUrl} from '../../github-url.js';
 
 const githubApiUrl = GithubApiUrl.getInstance();
 const githubUrl = GithubUrl.getInstance();

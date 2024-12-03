@@ -32,7 +32,6 @@ module.exports = {
     ecmaVersion: 'latest',
   },
   rules: {
-    'jest/no-conditional-expect': 'off',
     '@typescript-eslint/object-curly-spacing': 'off',
     '@typescript-eslint/space-infix-ops': 'off',
     'consistent-return': 2,
@@ -45,5 +44,7 @@ module.exports = {
     curly: ['error', 'all'],
     // indent: [1, 2],
     semi: [1, 'always'],
+
+    'import/no-unresolved': 'off',
   },
 };
