@@ -41,12 +41,12 @@ export async function createGithubAppToken(options) {
     }
     doDebug(options, '[createAppAuth]', {
         appId: Number(appId),
-        privateKey: privateKey.replace(/\\n*/g, '\n'),
+        privateKey: process.env.GITHUB_APP_PRIVATE_KEY || privateKey.replace(/\\n*/g, '\n'),
         request,
     });
     const auth = createAppAuth({
         appId: Number(appId),
-        privateKey: privateKey.replace(/\\n*/g, '\n'),
+        privateKey: process.env.GITHUB_APP_PRIVATE_KEY || privateKey.replace(/\\n*/g, '\n'),
         request,
     });
     const authentication = await authenticateGithubApp(auth, request, options);

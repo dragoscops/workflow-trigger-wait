@@ -65,12 +65,12 @@ export async function createGithubAppToken(options: Options): Promise<string> {
   // Initialize Octokit with App authentication
   doDebug(options, '[createAppAuth]', {
     appId: Number(appId), // Ensure appId is a number
-    privateKey: privateKey.replace(/\\n*/g, '\n'),
+    privateKey: process.env.GITHUB_APP_PRIVATE_KEY || privateKey.replace(/\\n*/g, '\n'),
     request,
   });
   const auth = createAppAuth({
     appId: Number(appId), // Ensure appId is a number
-    privateKey: privateKey.replace(/\\n*/g, '\n'),
+    privateKey: process.env.GITHUB_APP_PRIVATE_KEY || privateKey.replace(/\\n*/g, '\n'),
     request,
   });
 

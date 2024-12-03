@@ -160,6 +160,9 @@ jobs:
           timeout: '60000'
           action: 'trigger-and-wait'
           debug: 'yes'
+        env:
+          GITHUB_APP_PRIVATE_KEY: |
+            ${{ secrets.GH_APP_PRIVATE_KEY }}
 
       - name: '[6] (github-app) Verify Outputs'
         run: |
