@@ -273,28 +273,28 @@ jobs:
           echo "Run Conclusion: ${{ steps.run-app-owner-repo-detect-trigger-and-wait.outputs.run_conclusion }}"
           if [[ "${{ steps.run-app-owner-repo-detect-trigger-and-wait.outputs.run_conclusion }}" != "success" ]]; then exit 1; fi
 
-      # - name: "[7] (github-app) Run Simple Trigger And Wait"
-      #   id: run-app-token-regen
-      #   uses: dragoscops/workflow-trigger-wait@main
-      #   with:
-      #     credentials: |
-      #       {
-      #         "app": {
-      #           "appId": "${{ secrets.GH_APP_ID }}",
-      #           "installationId": "${{ secrets.GH_APP_INSTALLATION_ID }}",
-      #           "privateKey": "${{ secrets.GH_APP_PRIVATE_KEY }}"
-      #         }
-      #       }
-      #     repo: ${{ github.repository }}
-      #     workflow_id: "test-workflow.yml"
-      #     ref: "main"
-      #     inputs: '{"Timeout": "5"}'
-      #     wait_interval: "10000"
-      #     timeout: "60000"
-      #     action: "trigger-and-wait"
-      #     debug: "yes"
+      - name: "[7] (github-app) Run Simple Trigger And Wait"
+        id: run-app-token-regen
+        uses: dragoscops/workflow-trigger-wait@main
+        with:
+          credentials: |
+            {
+              "app": {
+                "appId": "${{ secrets.GH_APP_ID }}",
+                "privateKey": "${{ secrets.GH_APP_PRIVATE_KEY }}",
+                "owner": "${{ github.repository_owner }}"
+              }
+            }
+          repo: ${{ github.repository }}
+          workflow_id: "test-workflow.yml"
+          ref: "main"
+          inputs: '{"Timeout": "4000"}'
+          wait_interval: "10m"
+          timeout: "2h"
+          action: "trigger-and-wait"
+          debug: "yes"
 
-      # - name: "[7] (github-app) Verify Outputs"
-      #   run: |
-      #     echo "Run Conclusion: ${{ steps.run-app-token-regen.outputs.run_conclusion }}"
-      #     if [[ "${{ steps.run-app-token-regen.outputs.run_conclusion }}" != "success" ]]; then exit 1; fi
+      - name: "[7] (github-app) Verify Outputs"
+        run: |
+          echo "Run Conclusion: ${{ steps.run-app-token-regen.outputs.run_conclusion }}"
+          if [[ "${{ steps.run-app-token-regen.outputs.run_conclusion }}" != "success" ]]; then exit 1; fi
