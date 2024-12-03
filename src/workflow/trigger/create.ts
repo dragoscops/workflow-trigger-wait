@@ -10,12 +10,12 @@ export class CreateWorkflowError extends GenericError {
 }
 
 export async function createWorkflow(options: Options): Promise<void> {
-  const {ref, inputs, credentials} = options;
+  const {ref, inputs} = options;
   const workflowUrl = GithubApiUrl.getInstance().workflowDispatch(options);
 
   core.info(`Calling ${workflowUrl}@${ref}`);
   try {
-    const client = await createGithubClient(credentials);
+    const client = await createGithubClient(options);
     doDebug(options, '[createGithubClient]', client);
     const response = await client.post(workflowUrl, {
       ref,

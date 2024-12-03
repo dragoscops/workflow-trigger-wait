@@ -35,9 +35,8 @@ export async function lastUncompletedRun(options) {
     throw new DetermineWorkflowIdError('Failed to get workflow run ID after multiple polling attempts');
 }
 export async function listRuns(options) {
-    const { credentials } = options;
     const runsListUrl = githubApiUrl.runsList(options);
-    const client = await createGithubClient(credentials);
+    const client = await createGithubClient(options);
     const response = await client.get(runsListUrl);
     doDebug(options, '[determineWorkflowRunIdAttempt > axios.get]', runsListUrl, response);
     return response?.data?.workflow_runs ?? [];

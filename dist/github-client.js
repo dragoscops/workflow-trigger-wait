@@ -13,12 +13,12 @@ export class CreateGithubAppTokenError extends GenericError {
         return `Failed to create app token: ${errorMessage(error)}`;
     }
 }
-export async function authenticateGithubApp(auth, request, credentials) {
-    const { installationId } = credentials;
+export async function authenticateGithubApp(auth, request, options) {
+    const { installationId } = options.credentials.app;
     if (installationId && installationId.length > 0) {
         return auth({ type: 'installation', installationId });
     }
-    let { owner, repositories } = credentials;
+    let { owner, repositories } = options.credentials.app;
     let response;
     if (!repositories || repositories?.length === 0) {
         response = await request('GET /users/{owner}/installation', { owner, request: { hook: auth.hook } });
@@ -33,13 +33,13 @@ export async function authenticateGithubApp(auth, request, credentials) {
     console.log(response.data);
     return {};
 }
-export async function createGithubAppToken(credentials) {
-    const { appId, privateKey } = credentials;
+export async function createGithubAppToken(options) {
+    const { appId, privateKey } = options.credentials.app;
     const token = await tokenCache.get('token');
     if (token) {
         return token;
     }
-    doDebug({ credentials: { app: credentials } }, '[createAppAuth]', {
+    doDebug(options, '[createAppAuth]', {
         appId: Number(appId),
         privateKey: privateKey.replace(/\\n/g, '\n'),
         request,
@@ -49,14 +49,15 @@ export async function createGithubAppToken(credentials) {
         privateKey: privateKey.replace(/\\n/g, '\n'),
         request,
     });
-    const authentication = await authenticateGithubApp(auth, request, credentials);
+    const authentication = await authenticateGithubApp(auth, request, options);
     if (!authentication.token || !authentication.expiresAt) {
         throw new CreateGithubAppTokenError(CreateGithubAppTokenError.wrapErrorMessage('Octokit Auth Failed'));
     }
     tokenCache.set('token', authentication.token, new Date(authentication.expiresAt).getTime() - 60 * 1000);
     return authentication.token;
 }
-export async function createGithubToken(credentials) {
+export async function createGithubToken(options) {
+    const { credentials } = options;
     let token;
     if (credentials.token) {
         doDebug({ credentials }, '[createGithubToken(token)]');
@@ -64,7 +65,7 @@ export async function createGithubToken(credentials) {
     }
     else if (credentials.app) {
         doDebug({ credentials }, '[createGithubToken(app)]');
-        token = await createGithubAppToken(credentials.app);
+        token = await createGithubAppToken(options);
     }
     else {
         throw new InputError('Invalid credentials: No token or app credentials provided.');
@@ -72,9 +73,9 @@ export async function createGithubToken(credentials) {
     doDebug({ credentials }, '[createGithubToken]', token);
     return token;
 }
-export async function createGithubClient(credentials) {
-    const token = await createGithubToken(credentials);
-    doDebug({ credentials }, '[createGithubClient]', token);
+export async function createGithubClient(options) {
+    const token = await createGithubToken(options);
+    doDebug(options, '[createGithubClient]', token);
     return axios.create({
         baseURL: 'https://api.github.com',
         headers: {

@@ -22,7 +22,7 @@ export class WorkflowTimeoutError extends GenericError {
 
 // eslint-disable-next-line max-params
 export async function waitForWorkflow(options: Options): Promise<void> {
-  const {runId, waitInterval, timeout, credentials} = options;
+  const {runId, waitInterval, timeout} = options;
   if (!runId) {
     throw new InputError(`Invalid runId: ${runId}`);
   }
@@ -35,7 +35,7 @@ export async function waitForWorkflow(options: Options): Promise<void> {
   let response;
   while (Date.now() - startTime <= timeout) {
     try {
-      const client = await createGithubClient(credentials);
+      const client = await createGithubClient(options);
       response = await client.get(workflowRunStatusUrl);
       doDebug(options, '[waitForWorkflow > axios.get]', workflowRunStatusUrl, response);
     } catch (error) {

@@ -4,7 +4,7 @@ import axios, {AxiosInstance} from 'axios';
 import {createCache} from 'cache-manager';
 import Keyv from 'keyv';
 import {doDebug, errorMessage, GenericError, InputError} from './utils.js';
-import {AppCredentials, Credentials, Options} from './options.js';
+import {Options} from './options.js';
 
 export const tokenCache = createCache({
   stores: [new Keyv()],
@@ -19,13 +19,13 @@ export class CreateGithubAppTokenError extends GenericError {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function authenticateGithubApp(auth: any, request: any, credentials: AppCredentials): Promise<any> {
-  const {installationId} = credentials;
+export async function authenticateGithubApp(auth: any, request: any, options: Options): Promise<any> {
+  const {installationId} = options.credentials.app!;
   if (installationId && installationId.length > 0) {
     return auth({type: 'installation', installationId});
   }
 
-  let {owner, repositories} = credentials;
+  let {owner, repositories} = options.credentials.app!;
   // let repo;
   // if (!owner) {
   //   [owner, repo] = (process.env.GITHUB_REPOSITORY || '').split('/');
@@ -53,8 +53,8 @@ export async function authenticateGithubApp(auth: any, request: any, credentials
 /**
  * Create a GitHub App installation token using Octokit.
  */
-export async function createGithubAppToken(credentials: AppCredentials): Promise<string> {
-  const {appId, privateKey} = credentials;
+export async function createGithubAppToken(options: Options): Promise<string> {
+  const {appId, privateKey} = options.credentials.app!;
 
   // Check if a valid token is already cached
   const token = await tokenCache.get<string>('token');
@@ -63,7 +63,7 @@ export async function createGithubAppToken(credentials: AppCredentials): Promise
   }
 
   // Initialize Octokit with App authentication
-  doDebug({credentials: {app: credentials}} as Options, '[createAppAuth]', {
+  doDebug(options, '[createAppAuth]', {
     appId: Number(appId), // Ensure appId is a number
     privateKey: privateKey.replace(/\\n/g, '\n'),
     request,
@@ -75,7 +75,7 @@ export async function createGithubAppToken(credentials: AppCredentials): Promise
   });
 
   // Authenticate as the installation and get the token
-  const authentication = await authenticateGithubApp(auth, request, credentials);
+  const authentication = await authenticateGithubApp(auth, request, options);
   if (!authentication.token || !authentication.expiresAt) {
     throw new CreateGithubAppTokenError(CreateGithubAppTokenError.wrapErrorMessage('Octokit Auth Failed'));
   }
@@ -85,14 +85,15 @@ export async function createGithubAppToken(credentials: AppCredentials): Promise
   return authentication.token;
 }
 
-export async function createGithubToken(credentials: Credentials): Promise<string> {
+export async function createGithubToken(options: Options): Promise<string> {
+  const {credentials} = options;
   let token: string;
   if (credentials.token) {
     doDebug({credentials} as Options, '[createGithubToken(token)]');
     token = credentials.token; // Use the provided token
   } else if (credentials.app) {
     doDebug({credentials} as Options, '[createGithubToken(app)]');
-    token = await createGithubAppToken(credentials.app); // Placeholder for token generation logic
+    token = await createGithubAppToken(options); // Placeholder for token generation logic
   } else {
     throw new InputError('Invalid credentials: No token or app credentials provided.');
   }
@@ -100,9 +101,9 @@ export async function createGithubToken(credentials: Credentials): Promise<strin
   return token;
 }
 
-export async function createGithubClient(credentials: Credentials): Promise<AxiosInstance> {
-  const token = await createGithubToken(credentials);
-  doDebug({credentials} as Options, '[createGithubClient]', token);
+export async function createGithubClient(options: Options): Promise<AxiosInstance> {
+  const token = await createGithubToken(options);
+  doDebug(options, '[createGithubClient]', token);
   return axios.create({
     baseURL: 'https://api.github.com',
     headers: {

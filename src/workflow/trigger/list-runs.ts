@@ -51,10 +51,9 @@ interface WorkflowRun {
 }
 
 export async function listRuns(options: Options): Promise<WorkflowRun[]> {
-  const {credentials} = options;
   const runsListUrl = githubApiUrl.runsList(options);
 
-  const client = await createGithubClient(credentials);
+  const client = await createGithubClient(options);
   const response = await client.get(runsListUrl);
   doDebug(options, '[determineWorkflowRunIdAttempt > axios.get]', runsListUrl, response);
 
