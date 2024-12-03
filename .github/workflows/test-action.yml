@@ -140,7 +140,7 @@ jobs:
       #     echo "Run Conclusion: ${{ steps.run-timeout-trigger-and-wait.outputs.run_conclusion }}"
       #     if [[ "${{ steps.run-timeout-trigger-and-wait.outputs.run_conclusion }}" != "timeout" ]]; then exit 1; fi
 
-      - name: '[6] (github-app) Run Simple Trigger And Wait'
+      - name: '[6] (github-app) Run Simple Trigger And Wait (By Installation Id)'
         id: run-app-trigger-and-wait
         uses: dragoscops/workflow-trigger-wait@main
         with:

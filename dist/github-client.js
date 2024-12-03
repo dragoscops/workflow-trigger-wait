@@ -1,4 +1,5 @@
 import { createAppAuth } from '@octokit/auth-app';
+import { request } from '@octokit/request';
 import axios from 'axios';
 import { createCache } from 'cache-manager';
 import Keyv from 'keyv';
@@ -12,6 +13,26 @@ export class CreateGithubAppTokenError extends GenericError {
         return `Failed to create app token: ${errorMessage(error)}`;
     }
 }
+export async function authenticateGithubApp(auth, request, credentials) {
+    const { installationId } = credentials;
+    if (installationId && installationId.length > 0) {
+        return auth({ type: 'installation', installationId });
+    }
+    let { owner, repositories } = credentials;
+    let response;
+    if (!repositories || repositories?.length === 0) {
+        response = await request('GET /users/{owner}/installation', { owner, request: { hook: auth.hook } });
+    }
+    else {
+        response = await request('GET /users/{owner}/{repo}/installation', {
+            owner,
+            repo: repositories[0],
+            request: { hook: auth.hook },
+        });
+    }
+    console.log(response.data);
+    return {};
+}
 export async function createGithubAppToken(credentials) {
     const { appId, privateKey } = credentials;
     const token = await tokenCache.get('token');
@@ -21,8 +42,9 @@ export async function createGithubAppToken(credentials) {
     const auth = createAppAuth({
         appId: Number(appId),
         privateKey,
+        request,
     });
-    const authentication = await auth({ type: 'installation' });
+    const authentication = await authenticateGithubApp(auth, request, credentials);
     if (!authentication.token || !authentication.expiresAt) {
         throw new CreateGithubAppTokenError(CreateGithubAppTokenError.wrapErrorMessage('Octokit Auth Failed'));
     }

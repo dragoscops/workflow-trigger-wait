@@ -1,4 +1,5 @@
 import {createAppAuth} from '@octokit/auth-app';
+import {request} from '@octokit/request';
 import axios, {AxiosInstance} from 'axios';
 import {createCache} from 'cache-manager';
 import Keyv from 'keyv';
@@ -17,6 +18,38 @@ export class CreateGithubAppTokenError extends GenericError {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function authenticateGithubApp(auth: any, request: any, credentials: AppCredentials): Promise<any> {
+  const {installationId} = credentials;
+  if (installationId && installationId.length > 0) {
+    return auth({type: 'installation', installationId});
+  }
+
+  let {owner, repositories} = credentials;
+  // let repo;
+  // if (!owner) {
+  //   [owner, repo] = (process.env.GITHUB_REPOSITORY || '').split('/');
+  //   if (!repositories) {
+  //     repositories = [repo];
+  //   }
+  // }
+
+  let response;
+  if (!repositories || repositories?.length === 0) {
+    response = await request('GET /users/{owner}/installation', {owner, request: {hook: auth.hook}});
+  } else {
+    response = await request('GET /users/{owner}/{repo}/installation', {
+      owner,
+      repo: repositories[0],
+      request: {hook: auth.hook},
+    });
+  }
+
+  console.log(response.data);
+
+  return {};
+}
+
 /**
  * Create a GitHub App installation token using Octokit.
  */
@@ -33,13 +66,11 @@ export async function createGithubAppToken(credentials: AppCredentials): Promise
   const auth = createAppAuth({
     appId: Number(appId), // Ensure appId is a number
     privateKey,
-    // TODO: not sure I need the request...
-    // https://github.com/actions/create-github-app-token/blob/main/lib/request.js
-    // request
+    request,
   });
 
   // Authenticate as the installation and get the token
-  const authentication = await auth({type: 'installation'});
+  const authentication = await authenticateGithubApp(auth, request, credentials);
   if (!authentication.token || !authentication.expiresAt) {
     throw new CreateGithubAppTokenError(CreateGithubAppTokenError.wrapErrorMessage('Octokit Auth Failed'));
   }

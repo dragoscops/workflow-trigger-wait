@@ -14,6 +14,9 @@ export type ActionType = (typeof actionTypes)[number];
 export type AppCredentials = {
   appId: string;
   privateKey: string;
+  installationId?: string;
+  owner?: string;
+  repositories?: string[];
 };
 
 export type Credentials = {
