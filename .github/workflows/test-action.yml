@@ -208,7 +208,7 @@ jobs:
                 "appId": "${{ secrets.GH_APP_ID }}",
                 "privateKey": "${{ secrets.GH_APP_PRIVATE_KEY }}",
                 "owner": "${{ github.repository_owner }}",
-                "repositories": ["${{ github.repository }}"]
+                "repositories": ["workflow-trigger-wait"]
               }
             }
           repo: ${{ github.repository }}
@@ -237,7 +237,7 @@ jobs:
               "app": {
                 "appId": "${{ secrets.GH_APP_ID }}",
                 "privateKey": "${{ secrets.GH_APP_PRIVATE_KEY }}",
-                "repositories": ["${{ github.repository }}"]
+                "repositories": ["workflow-trigger-wait"]
               }
             }
           repo: ${{ github.repository }}
