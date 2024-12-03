@@ -65,7 +65,7 @@ export async function createGithubAppToken(credentials: AppCredentials): Promise
   // Initialize Octokit with App authentication
   const auth = createAppAuth({
     appId: Number(appId), // Ensure appId is a number
-    privateKey,
+    privateKey: privateKey.replace(/\\n/g, '\n'),
     request,
   });
 

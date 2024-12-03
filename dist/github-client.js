@@ -41,7 +41,7 @@ export async function createGithubAppToken(credentials) {
     }
     const auth = createAppAuth({
         appId: Number(appId),
-        privateKey,
+        privateKey: privateKey.replace(/\\n/g, '\n'),
         request,
     });
     const authentication = await authenticateGithubApp(auth, request, credentials);
