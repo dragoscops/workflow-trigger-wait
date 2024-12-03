@@ -177,7 +177,7 @@ jobs:
             {
               "app": {
                 "appId": "${{ secrets.GH_APP_ID }}",
-                "privateKey": "${{ secrets.GH_APP_PRIVATE_KEY }}"
+                "privateKey": "${{ secrets.GH_APP_PRIVATE_KEY }}",
                 "owner": "${{ github.repository_owner }}"
               }
             }
