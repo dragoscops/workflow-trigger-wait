@@ -169,7 +169,7 @@ jobs:
           echo "Run Conclusion: ${{ steps.run-app-trigger-and-wait.outputs.run_conclusion }}"
           if [[ "${{ steps.run-app-trigger-and-wait.outputs.run_conclusion }}" != "success" ]]; then exit 1; fi
 
-      - name: '[7] (github-app) Run Simple Trigger And Wait (By Given Owner - Global InstallationId)'
+      - name: '[7] (github-app) Run Simple Trigger And Wait (By Given Owner - Detecting Global InstallationId)'
         id: run-app-owner-trigger-and-wait
         uses: dragoscops/workflow-trigger-wait@main
         with:
@@ -198,7 +198,7 @@ jobs:
           echo "Run Conclusion: ${{ steps.run-app-owner-trigger-and-wait.outputs.run_conclusion }}"
           if [[ "${{ steps.run-app-owner-trigger-and-wait.outputs.run_conclusion }}" != "success" ]]; then exit 1; fi
 
-      - name: '[8] (github-app) Run Simple Trigger And Wait (By Given Owner And Repo)'
+      - name: '[8] (github-app) Run Simple Trigger And Wait (By Given Owner And Repo - Detecting By Repo InstallationId)'
         id: run-app-owner-repo-trigger-and-wait
         uses: dragoscops/workflow-trigger-wait@main
         with:
@@ -206,7 +206,7 @@ jobs:
             {
               "app": {
                 "appId": "${{ secrets.GH_APP_ID }}",
-                "privateKey": "${{ secrets.GH_APP_PRIVATE_KEY }}"
+                "privateKey": "${{ secrets.GH_APP_PRIVATE_KEY }}",
                 "owner": "${{ github.repository_owner }}",
                 "repositories": ["${{ github.repository }}"]
               }
@@ -227,6 +227,35 @@ jobs:
         run: |
           echo "Run Conclusion: ${{ steps.run-app-owner-repo-trigger-and-wait.outputs.run_conclusion }}"
           if [[ "${{ steps.run-app-owner-repo-trigger-and-wait.outputs.run_conclusion }}" != "success" ]]; then exit 1; fi
+
+      - name: '[9] (github-app) Run Simple Trigger And Wait (By Given Repo - Detecting Owner and InstallationId)'
+        id: run-app-repo-trigger-and-wait
+        uses: dragoscops/workflow-trigger-wait@main
+        with:
+          credentials: |
+            {
+              "app": {
+                "appId": "${{ secrets.GH_APP_ID }}",
+                "privateKey": "${{ secrets.GH_APP_PRIVATE_KEY }}",
+                "repositories": ["${{ github.repository }}"]
+              }
+            }
+          repo: ${{ github.repository }}
+          workflow_id: 'test-workflow.yml'
+          ref: 'main'
+          inputs: '{"Timeout": "5"}'
+          wait_interval: '10000'
+          timeout: '60000'
+          action: 'trigger-and-wait'
+          debug: 'yes'
+        env:
+          GITHUB_APP_PRIVATE_KEY: |
+            ${{ secrets.GH_APP_PRIVATE_KEY }}
+
+      - name: '[9] (github-app) Verify Outputs'
+        run: |
+          echo "Run Conclusion: ${{ steps.run-app-repo-trigger-and-wait.outputs.run_conclusion }}"
+          if [[ "${{ steps.run-app-repo-trigger-and-wait.outputs.run_conclusion }}" != "success" ]]; then exit 1; fi
 
       # - name: "[7] (github-app) Run Simple Trigger And Wait"
       #   id: run-app-token-regen
