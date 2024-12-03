@@ -69,6 +69,18 @@ export const defaultOptionsForApp: Options = {
   },
 };
 
+export function doDebug(options: Options, ...values: unknown[]) {
+  if (['true', 'yes'].includes((options.debug ?? 'no').toLowerCase())) {
+    if (typeof values[0] === 'string') {
+      console.log(`::group::${values[0]}`);
+    }
+    console.log(...values);
+    if (typeof values[0] === 'string') {
+      console.log('::endgroup::');
+    }
+  }
+}
+
 export function processOptions() {
   let credentials: Credentials;
   const credentialsInput = core.getInput('credentials');

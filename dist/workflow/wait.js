@@ -2,7 +2,8 @@ import * as core from '@actions/core';
 import { GithubApiUrl } from '../github-api-url.js';
 import { createGithubClient } from '../github-client.js';
 import { GithubUrl } from '../github-url.js';
-import { doDebug, sleep, errorMessage, GenericError, InputError } from '../utils.js';
+import { doDebug } from '../options.js';
+import { sleep, errorMessage, GenericError, InputError } from '../utils.js';
 export class WaitForWorkflowError extends GenericError {
     runConclusion;
     constructor(runConclusion, message, ...args) {

@@ -1,6 +1,6 @@
 import * as core from '@actions/core';
-import { processOptions } from './options.js';
-import { doDebug, silentFail, errorMessage, GenericError, InputError } from './utils.js';
+import { doDebug, processOptions } from './options.js';
+import { silentFail, errorMessage, GenericError, InputError } from './utils.js';
 import { triggerWorkflow } from './workflow/trigger.js';
 import { waitForWorkflow } from './workflow/wait.js';
 export default async function run() {

@@ -1,8 +1,8 @@
 import * as core from '@actions/core';
 
 import {createGithubClient} from '../../github-client.js';
-import {Options} from '../../options.js';
-import {doDebug, sleep, errorMessage, GenericError} from '../../utils.js';
+import {doDebug, Options} from '../../options.js';
+import {sleep, errorMessage, GenericError} from '../../utils.js';
 import {GithubApiUrl} from '../../github-api-url.js';
 import {GithubUrl} from '../../github-url.js';
 
