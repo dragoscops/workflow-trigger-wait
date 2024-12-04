@@ -1,6 +1,6 @@
 import * as core from '@actions/core';
 
-import {createGithubClient} from '../../github-client.js';
+import {GithubClient} from '../../github-client.js';
 import {doDebug, Options} from '../../options.js';
 import {sleep, errorMessage, GenericError} from '../../utils.js';
 import {GithubApiUrl} from '../../github-api-url.js';
@@ -53,7 +53,7 @@ interface WorkflowRun {
 export async function listRuns(options: Options): Promise<WorkflowRun[]> {
   const runsListUrl = githubApiUrl.runsList(options);
 
-  const client = await createGithubClient(options);
+  const client = await GithubClient.instance(options).create();
   const response = await client.get(runsListUrl);
   doDebug(options, '[determineWorkflowRunIdAttempt > axios.get]', runsListUrl, response);
 

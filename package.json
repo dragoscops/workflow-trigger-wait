@@ -3,7 +3,7 @@
   "type": "module",
   "scripts": {
     "audit-modules": "npm audit",
-    "build": "tsc -p ./tsconfig.esm.json",
+    "build": "tsc -p ./tsconfig.json",
     "ca:lint": "run-s lint prettier",
     "ca:quality": "run-s jscpd depcruise",
     "ca:security": "run-s license-check audit-modules",

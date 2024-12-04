@@ -1,7 +1,7 @@
 import * as core from '@actions/core';
 
 import {GithubApiUrl} from '../../github-api-url.js';
-import {createGithubClient} from '../../github-client.js';
+import {GithubClient} from '../../github-client.js';
 import {doDebug, Options} from '../../options.js';
 import {errorMessage, GenericError} from '../../utils.js';
 
@@ -15,7 +15,7 @@ export async function createWorkflow(options: Options): Promise<void> {
 
   core.info(`Calling ${workflowUrl}@${ref}`);
   try {
-    const client = await createGithubClient(options);
+    const client = await GithubClient.instance(options).create();
     doDebug(options, '[createGithubClient]', client);
     const response = await client.post(workflowUrl, {
       ref,
