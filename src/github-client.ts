@@ -71,8 +71,9 @@ export async function createGithubAppToken(options: Options): Promise<string> {
   if (!authentication.token || !authentication.expiresAt) {
     throw new CreateGithubAppTokenError(CreateGithubAppTokenError.wrapErrorMessage('Octokit Auth Failed'));
   }
-  // set a 1 minute less expiration time for the cache
-  tokenCache.set('token', authentication.token, new Date(authentication.expiresAt).getTime() - 60 * 1000);
+  // set expiration to 90% of the token expiration date
+  const tokenExpireTtl = new Date(authentication.expiresAt).getTime() - new Date().getTime();
+  tokenCache.set('token', authentication.token, Math.trunc(tokenExpireTtl * 0.9));
 
   return authentication.token;
 }
