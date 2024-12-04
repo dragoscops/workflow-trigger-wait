@@ -3,7 +3,7 @@
 import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
 import {describe, it, expect, beforeEach, afterEach} from 'vitest';
-import {GithubApiUrl} from './github-api-url.js';
+import {GithubApiUrl} from './github/api-url.js';
 import {actionTriggerAndWait, defaultOptions, Options} from './options.js';
 import {runAction} from './run.js';
 

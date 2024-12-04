@@ -4,7 +4,7 @@ import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
 import {describe, it, expect, beforeEach, afterEach} from 'vitest';
 import {createWorkflow} from './create.js';
-import {GithubApiUrl} from '../../github-api-url.js';
+import {GithubApiUrl} from '../../github/api-url.js';
 import {defaultOptions} from '../../options.js';
 
 describe('createWorkflow', () => {

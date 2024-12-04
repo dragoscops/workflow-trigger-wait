@@ -3,21 +3,22 @@ import {createAppAuth, InstallationAccessTokenAuthentication} from '@octokit/aut
 import {request} from '@octokit/request';
 import axios, {AxiosInstance} from 'axios';
 import {createCache} from 'cache-manager';
+// eslint-disable-next-line import/no-named-as-default
 import Keyv from 'keyv';
-import {errorMessage, GenericError, InputError} from './utils.js';
-import {doDebug, Options} from './options.js';
+import {errorMessage, GenericError, InputError} from '../utils.js';
+import {doDebug, Options} from '../options.js';
 import type * as OctokitTypes from '@octokit/types';
 import pRetry from 'p-retry';
 
-export class GithubClient {
-  private tokenCache = createCache({
+export class GithubAxios {
+  private readonly tokenCache = createCache({
     stores: [new Keyv()],
   });
 
-  private constructor(private options: Options) {}
+  private constructor(private readonly options: Options) {}
 
-  static instance(options: Options): GithubClient {
-    return new GithubClient(options);
+  static instance(options: Options): GithubAxios {
+    return new GithubAxios(options);
   }
 
   async create(): Promise<AxiosInstance> {

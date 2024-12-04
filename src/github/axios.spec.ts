@@ -2,15 +2,20 @@
 /* eslint-disable max-len */
 /* eslint-disable max-lines-per-function */
 
-import {describe, it, expect, beforeEach, vi, beforeAll} from 'vitest';
-import axios, {AxiosInstance} from 'axios';
+import {describe, it, expect, beforeEach, vi} from 'vitest';
+import axios from 'axios';
 import {createAppAuth, InstallationAccessTokenAuthentication} from '@octokit/auth-app';
 import {request} from '@octokit/request';
-import pRetry from 'p-retry';
 
-import {GithubClient, CreateGithubAppTokenError} from './github-client.js';
-import {defaultOptionsForApp} from './options.js';
-import {InputError, GenericError, errorMessage} from './utils.js';
+import {GithubAxios, CreateGithubAppTokenError} from './axios.js';
+import {defaultOptionsForApp} from '../options.js';
+import {InputError} from '../utils.js';
+
+const requestByRepositoryInstallationUrl = 'GET /repos/{owner}/{repo}/installation';
+const requestByOwnerInstallationUrl = 'GET /users/{owner}/installation';
+
+const mockTestOwner = 'test-owner';
+const mockTestRepo = 'test-repo';
 
 const mockAuthentication = {
   token: 'new-octokit-token',
@@ -39,27 +44,14 @@ vi.mock('@octokit/request', () => ({
   request: vi.fn(() => mockResponseReturn),
 }));
 
-// // Mock Axios.create
-// const mockAxiosInstance = {} as AxiosInstance;
-// vi.mock('axios', () => ({
-//   ...vi.importActual('axios'),
-//   create: vi.fn(() => mockAxiosInstance),
-// }));
-
 describe('GithubClient', () => {
-  let githubClient: GithubClient;
+  let githubClient: GithubAxios;
 
   beforeEach(() => {
     vi.clearAllMocks();
 
-    // // Reset the cache mock
-    // const mockCache = mockedCreateCache();
-    // mockCache.get.mockReset();
-    // mockCache.set.mockReset();
-    // mockCache.clear.mockReset();
-
     // Initialize GithubClient instance
-    githubClient = GithubClient.instance(defaultOptionsForApp);
+    githubClient = GithubAxios.instance(defaultOptionsForApp);
   });
 
   describe('create()', () => {
@@ -68,7 +60,7 @@ describe('GithubClient', () => {
       const createTokenSpy = vi.spyOn(githubClient, 'createToken').mockResolvedValueOnce(mockAuthentication.token);
       const axiosCreateSpy = vi.spyOn(axios, 'create');
 
-      const axiosInstance = await githubClient.create();
+      await githubClient.create();
 
       expect(createTokenSpy).toHaveBeenCalledTimes(1);
       expect(axiosCreateSpy).toHaveBeenCalledWith({
@@ -79,7 +71,6 @@ describe('GithubClient', () => {
           'X-GitHub-Api-Version': '2022-11-28',
         },
       });
-      // expect(axiosInstance instanceof AxiosInstance).toBeTruthy();
     });
 
     it('should throw InputError if neither token nor app credentials are provided', async () => {
@@ -88,7 +79,7 @@ describe('GithubClient', () => {
         credentials: {},
       };
 
-      const client = GithubClient.instance(invalidOptions);
+      const client = GithubAxios.instance(invalidOptions);
 
       await expect(client.create()).rejects.toThrow(InputError);
     });
@@ -103,7 +94,7 @@ describe('GithubClient', () => {
           token: mockToken,
         },
       };
-      const token = await GithubClient.instance(optionsWithToken).createToken();
+      const token = await GithubAxios.instance(optionsWithToken).createToken();
 
       expect(token).toBe(mockToken);
     });
@@ -111,7 +102,7 @@ describe('GithubClient', () => {
     it('should return the provided token when credentials include a token', async () => {
       const mockToken = 'personal-access-token';
 
-      const githubClient = GithubClient.instance(defaultOptionsForApp);
+      const githubClient = GithubAxios.instance(defaultOptionsForApp);
 
       vi.spyOn(githubClient, 'createAppToken').mockResolvedValueOnce(mockToken);
 
@@ -125,7 +116,7 @@ describe('GithubClient', () => {
         ...defaultOptionsForApp,
         credentials: {},
       };
-      const client = GithubClient.instance(invalidOptions);
+      const client = GithubAxios.instance(invalidOptions);
 
       await expect(client.createToken()).rejects.toThrow(InputError);
     });
@@ -194,7 +185,7 @@ describe('GithubClient', () => {
         },
       };
 
-      const githubClient = GithubClient.instance(optionsWithInstallationId);
+      const githubClient = GithubAxios.instance(optionsWithInstallationId);
 
       const authentication = await githubClient.authenticateApp(mockAuthFn, request);
 
@@ -209,17 +200,16 @@ describe('GithubClient', () => {
           app: {
             ...defaultOptionsForApp.credentials.app!,
             installationId: '',
-            owner: 'test-owner',
-            repositories: ['test-repo'],
+            owner: mockTestOwner,
+            repositories: [],
           },
         },
       };
-      const githubClient = GithubClient.instance(optionsWithoutInstallationId);
+      const githubClient = GithubAxios.instance(optionsWithoutInstallationId);
       const authentication = await githubClient.authenticateApp(mockAuthFn, request);
 
-      expect(request).toHaveBeenCalledWith('GET /repos/{owner}/{repo}/installation', {
-        owner: 'test-owner',
-        repo: 'test-repo',
+      expect(request).toHaveBeenCalledWith(requestByOwnerInstallationUrl, {
+        owner: mockTestOwner,
         request: {hook: undefined},
       });
 
@@ -240,24 +230,24 @@ describe('GithubClient', () => {
           app: {
             ...defaultOptionsForApp.credentials.app!,
             installationId: '',
-            owner: 'test-owner',
-            repositories: ['test-repo'],
+            owner: mockTestOwner,
+            repositories: [mockTestRepo],
           },
         },
       };
 
-      const githubClient = GithubClient.instance(options);
+      const githubClient = GithubAxios.instance(options);
       const result = await githubClient.authenticateAppByOwnerAndRepository(mockAuthFn, request);
 
-      expect(request).toHaveBeenCalledWith('GET /repos/{owner}/{repo}/installation', {
-        owner: 'test-owner',
-        repo: 'test-repo',
+      expect(request).toHaveBeenCalledWith(requestByRepositoryInstallationUrl, {
+        owner: mockTestOwner,
+        repo: mockTestRepo,
         request: {hook: undefined},
       });
 
       expect(mockAuthFn).toHaveBeenCalledWith({
         type: 'installation',
-        installationId: 'installation-id-from-owner',
+        installationId: mockResponseReturn.data.id,
       });
 
       expect(result).toEqual(mockAuthentication);
@@ -284,11 +274,11 @@ describe('GithubClient', () => {
           },
         },
       };
-      const githubClient = GithubClient.instance(options);
+      const githubClient = GithubAxios.instance(options);
 
       const result = await githubClient.authenticateAppByOwnerAndRepository(mockAuthFn, request);
 
-      expect(request).toHaveBeenCalledWith('GET /repos/{owner}/{repo}/installation', {
+      expect(request).toHaveBeenCalledWith(requestByRepositoryInstallationUrl, {
         owner: 'env-owner',
         repo: 'env-repo',
         request: {hook: undefined},
@@ -296,7 +286,7 @@ describe('GithubClient', () => {
 
       expect(mockAuthFn).toHaveBeenCalledWith({
         type: 'installation',
-        installationId: 'installation-id-from-owner',
+        installationId: mockResponseReturn.data.id,
       });
 
       expect(result).toEqual(mockAuthentication);

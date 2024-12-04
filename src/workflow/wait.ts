@@ -1,7 +1,7 @@
 import * as core from '@actions/core';
-import {GithubApiUrl} from '../github-api-url.js';
-import {GithubClient} from '../github-client.js';
-import {GithubUrl} from '../github-url.js';
+import {GithubApiUrl} from '../github/api-url.js';
+import {GithubAxios} from '../github/axios.js';
+import {GithubUrl} from '../github/url.js';
 import {doDebug, Options} from '../options.js';
 import {sleep, errorMessage, GenericError, InputError} from '../utils.js';
 
@@ -35,7 +35,7 @@ export async function waitForWorkflow(options: Options): Promise<void> {
   let response;
   while (Date.now() - startTime <= timeout) {
     try {
-      const client = await GithubClient.instance(options).create();
+      const client = await GithubAxios.instance(options).create();
       response = await client.get(workflowRunStatusUrl);
       doDebug(options, '[waitForWorkflow > axios.get]', workflowRunStatusUrl, response);
     } catch (error) {

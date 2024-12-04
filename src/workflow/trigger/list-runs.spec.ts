@@ -6,9 +6,24 @@ import MockAdapter from 'axios-mock-adapter';
 import {describe, it, expect, beforeEach, afterEach} from 'vitest';
 import {lastUncompletedRunAttempt, lastUncompletedRun} from './list-runs.js';
 import {defaultOptions} from '../../options.js';
-import {GithubApiUrl} from '../../github-api-url.js';
+import {GithubApiUrl} from '../../github/api-url.js';
 
 const internalServerError = 'Internal Server Error';
+
+const mockRunsListUrlResponseEmpty = {
+  workflow_runs: [],
+};
+
+const mockRunsListUrlResponse = {
+  workflow_runs: [
+    {
+      id: 12345,
+      head_branch: defaultOptions.ref,
+      path: defaultOptions.workflowId,
+      status: 'in_progress',
+    },
+  ],
+};
 
 describe('list-runs', () => {
   let mock: MockAdapter;
@@ -26,16 +41,7 @@ describe('list-runs', () => {
   describe('lastUncompletedRunAttempt', () => {
     it('should return a matching workflow run ID', async () => {
       // Mock GET response with a matching workflow run
-      mock.onGet(mockRunsListUrl).reply(200, {
-        workflow_runs: [
-          {
-            id: 12345,
-            head_branch: defaultOptions.ref,
-            path: defaultOptions.workflowId,
-            status: 'in_progress',
-          },
-        ],
-      });
+      mock.onGet(mockRunsListUrl).reply(200, mockRunsListUrlResponse);
 
       const runId = await lastUncompletedRunAttempt(defaultOptions);
       expect(runId).toBe('12345');
@@ -77,21 +83,9 @@ describe('list-runs', () => {
   describe('lastUncompletedRun', () => {
     it('should return a workflow run ID if found within the timeout period', async () => {
       // First call: No matching workflow run
-      mock.onGet(mockRunsListUrl).replyOnce(200, {
-        workflow_runs: [],
-      });
-
+      mock.onGet(mockRunsListUrl).replyOnce(200, mockRunsListUrlResponseEmpty);
       // Second call: Matching workflow run found
-      mock.onGet(mockRunsListUrl).replyOnce(200, {
-        workflow_runs: [
-          {
-            id: 12345,
-            head_branch: defaultOptions.ref,
-            path: defaultOptions.workflowId,
-            status: 'in_progress',
-          },
-        ],
-      });
+      mock.onGet(mockRunsListUrl).replyOnce(200, mockRunsListUrlResponse);
 
       const runId = await lastUncompletedRun(defaultOptions);
       expect(runId).toBe('12345');
@@ -100,9 +94,7 @@ describe('list-runs', () => {
 
     it('should throw an error if no workflow run ID is found within the timeout period', async () => {
       // Mock GET response with no matching workflow runs for all attempts
-      mock.onGet(mockRunsListUrl).reply(200, {
-        workflow_runs: [],
-      });
+      mock.onGet(mockRunsListUrl).reply(200, mockRunsListUrlResponseEmpty);
 
       await expect(lastUncompletedRun(defaultOptions)).rejects.toThrow(
         'Failed to get workflow run ID after multiple polling attempts',
@@ -122,21 +114,9 @@ describe('list-runs', () => {
 
     it('should respect the polling interval between attempts', async () => {
       // First call: No matching workflow run
-      mock.onGet(mockRunsListUrl).replyOnce(200, {
-        workflow_runs: [],
-      });
-
+      mock.onGet(mockRunsListUrl).replyOnce(200, mockRunsListUrlResponseEmpty);
       // Second call: Matching workflow run found
-      mock.onGet(mockRunsListUrl).replyOnce(200, {
-        workflow_runs: [
-          {
-            id: 12345,
-            head_branch: defaultOptions.ref,
-            path: defaultOptions.workflowId,
-            status: 'in_progress',
-          },
-        ],
-      });
+      mock.onGet(mockRunsListUrl).replyOnce(200, mockRunsListUrlResponse);
 
       const startTime = Date.now();
       const runId = await lastUncompletedRun(defaultOptions);

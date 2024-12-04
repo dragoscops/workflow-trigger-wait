@@ -1,4 +1,4 @@
-import {Options} from './options.js';
+import {Options} from '../options.js';
 
 let instance: GithubApiUrl;
 
