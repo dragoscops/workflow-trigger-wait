@@ -1,8 +1,6 @@
 # GitHub Action: Workflow Trigger and Wait
 
-![Build Status](https://github.com/dragoscops/workflow-trigger-wait/actions/workflows/ci.yml/badge.svg)
-![Coverage Status](https://img.shields.io/codecov/c/github/dragoscops/workflow-trigger-wait)
-![License](https://img.shields.io/github/license/dragoscops/workflow-trigger-wait)
+[![Build Status](https://github.com/dragoscops/workflow-trigger-wait/actions/workflows/ci.yml/badge.svg)](https://github.com/dragoscops/workflow-trigger-wait/actions/workflows/ci.yml)
 
 This GitHub Action facilitates triggering workflows in a different repository and optionally waiting for them to complete. It's designed to streamline the coordination of workflows across multiple repositories, enhancing automation and efficiency in your development processes.
 
@@ -43,7 +41,10 @@ This GitHub Action facilitates triggering workflows in a different repository an
 ## Prerequisites
 
 - **GitHub Token:** A GitHub token with appropriate permissions to trigger and monitor workflows in the target repository.
-- **GitHub App Credentials (Optional):** If using a GitHub App for authentication, ensure you have the `appId`, `privateKey`, (and `installationId`).
+- **GitHub App Credentials (Optional):** If using a GitHub App for authentication, ensure you have the `appId`, `privateKey`.
+
+> [!IMPORTANT]
+> In case you wish to use a Github App token for authentication, there is no limitation to the token, however, remember that *an installation access token expires after 1 hour*. To benefit the capability to use a token refresh mechanism for authentication, use our `app` configuration for authentication. The `app` configuration allows this Github Action to mimic [create-github-app-token](https://github.com/actions/create-github-app-token), generating a github app token, however it makes sure the token is refreshed/re-generated when it is close to expire.
 
 ## Usage
 
@@ -75,7 +76,8 @@ This GitHub Action facilitates triggering workflows in a different repository an
 | `token`  | No       | N/A     | GitHub Token with necessary permissions. |
 | `app`    | No       | N/A     | GitHub App credentials as a nested JSON. |
 
-If `token` is not specified, the Github Action will look for `app`.
+> [!NOTE] 
+> If `token` is not specified, the Github Action will look for `app`.
 
 ##### Credentials: GitHub App
 
@@ -87,7 +89,8 @@ If `token` is not specified, the Github Action will look for `app`.
 | `owner`          | No       | N/A     | Owner of the GitHub App                                 |
 | `repositories`   | No       | N/A     | List of repositories the GitHub App has access to       |
 
-> **Note:** Since `credentials` is a JSON string, the `privateKey` **can not** be provided as a PEM in raw format. To pass the private key correctly, join the PEM lines using `\\n` or provide it through the `GH_APP_PRIVATE_KEY` environment variable.
+> [!NOTE] 
+> Since `credentials` is a JSON string, the `privateKey` **can not** be provided as a PEM in raw format. To pass the private key correctly, join the PEM lines using `\\n` or provide it through the `GH_APP_PRIVATE_KEY` environment variable.
 
 - **Example of Joining PEM Lines:**
   
