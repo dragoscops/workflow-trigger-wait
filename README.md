@@ -21,19 +21,49 @@ This GitHub Action facilitates triggering workflows in a different repository an
 
 ### Inputs
 
-| Name             | Required | Default     | Description                                                                 |
-|------------------|----------|-------------|-----------------------------------------------------------------------------|
-| `github_token`   | **Yes**  | N/A         | GitHub token for authentication.                                           |
-| `repo`           | No       | N/A         | Target repository in the format `owner/repo`.                              |
-| `workflow_id`    | No       | N/A         | Workflow file name or ID to trigger.                                       |
-| `ref`            | No       | `main`      | Git reference (branch, tag, or commit SHA) for the workflow.               |
-| `inputs`         | No       | `{}`        | JSON string of inputs for the workflow.                                    |
-| `wait_interval`  | No       | `10s`       | Interval between status checks (e.g., `30s`, `1m`).                        |
-| `timeout`        | No       | `1h`        | Maximum time to wait for workflow completion (e.g., `15m`, `2h`).          |
+| Name             | Required | Default     | Description                                                                   |
+|------------------|----------|-------------|-------------------------------------------------------------------------------|
+| `credentials`    | **Yes**  | N/A         | [GitHub credentials](#credentials) provided as a JSON string.                 |
+| `repo`           | No       | N/A         | Target repository in the format `owner/repo`.                                 |
+| `workflow_id`    | No       | N/A         | Workflow file name or ID to trigger.                                          |
+| `ref`            | No       | `main`      | Git reference (branch, tag, or commit SHA) for the workflow.                  |
+| `inputs`         | No       | `{}`        | JSON string of inputs for the workflow.                                       |
+| `wait_interval`  | No       | `10s`       | Interval between status checks (e.g., `30s`, `1m`).                           |
+| `timeout`        | No       | `1h`        | Maximum time to wait for workflow completion (e.g., `15m`, `2h`).             |
 | `action`         | No       | `trigger-and-wait` | Mode of operation: `trigger-and-wait`, `trigger-only`, or `wait-only`. |
-| `run_id`         | No       | N/A         | Workflow run ID (required for `wait-only`).                                |
-| `no_throw`       | No       | `false`     | Suppresses errors if set to `true` or `yes`.                               |
-| `debug`          | No       | `no`        | Enables debug logs if set to `true` or `yes`.                              |
+| `run_id`         | No       | N/A         | Workflow run ID (required for `wait-only`).                                   |
+| `no_throw`       | No       | `false`     | Suppresses errors if set to `true` or `yes`.                                  |
+| `debug`          | No       | `no`        | Enables debug logs if set to `true` or `yes`.                                 |
+| `app_id`         | No       | N/A         | GitHub App ID for authentication.                                             |
+| `private_key`    | No       | N/A         | Private key for GitHub App authentication. Can be passed as a PEM string joined by `\n` or as an environment variable. |
+| `installation_id`| No       | N/A         | Installation ID for the GitHub App.                                           |
+| `owner`          | No       | N/A         | Owner of the repository.                                                      |
+| `repositories`   | No       | N/A         | List of repositories for the GitHub App.                                      |
+
+#### Credentials
+
+| Name             | Required | Default     | Description                                        |
+|------------------|----------|-------------|----------------------------------------------------|
+| `token`          | No       | N/A         | Github Token.                                      |
+| `app`            | No       | N/A         | [Github App Credentials](#credentials-github-app). |
+
+##### Credentials: GitHub App
+
+| Name             | Required | Default     | Description                                        |
+|------------------|----------|-------------|----------------------------------------------------|
+| `appId`          | **Yes**  | N/A         | Github App ID                                      |
+| `privateKey`     | **Yes**  | N/A         | Github App Private Key                             |
+| `installationId` | No       | N/A         | Installation ID                                    |
+| `owner`          | No       | N/A         | Application Owner                                  |
+| `repositories`   | No       | N/A         | Owner Repositories                                 |
+
+Since `credentials` is a JSON, the `privateKey` can be provided as a PEM in raw format. Thus, we will join the PEM lines using `\\n` or provide a separate environment variable under `GH_APP_PRIVATE_KEY` name.
+
+If `installationId` is not specified, the action will look for `owner`. If the `owner` is not specified, the action will look for `github.GH_REPOSITORY` environment variable and extract it from there.
+
+If `repositories` is not mentioned, the same `github.GH_REPOSITORY` will provide this information as well.
+
+Ensure that the `token`, `appId`, `privateKey`, and `installationId` are securely stored as secrets in your GitHub repository.
 
 ---
 
@@ -61,9 +91,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Trigger and Wait for Workflow
-        uses: dragoscops/workflow-trigger-wait@v2
+        uses: dragoscops/workflow-trigger-wait@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          credentials: |
+            {
+              "token": "${{ secrets.GH_TOKEN }}"
+            }
           repo: "owner/target-repo"
           workflow_id: "workflow.yml"
           ref: "main"
@@ -71,6 +104,47 @@ jobs:
           wait_interval: "30s"
           timeout: "15m"
           action: "trigger-and-wait"
+```
+
+#### Trigger using Github App
+
+##### Using `privateKey`:
+
+```yaml
+- name: Trigger and Wait for Workflow
+  uses: dragoscops/workflow-trigger-wait@v3
+  with:
+    credentials: |
+      {
+        "appId": "${{ vars.GH_APP_ID }}",
+        "privateKey": "${{ secrets.GH_APP_PRIVATE_KEY }},
+        "owner": "dragoscops"
+      }
+    ...
+```
+
+Normalizing the key for passing it to `privateKey`:
+
+```javascript
+console.log(require("fs").readFileSync("/path/to/key.pem").toString().replace(/\n/g, "\\n"));
+```
+
+##### Using `GH_APP_PRIVATE_KEY` env var:
+
+```yaml
+- name: Trigger and Wait for Workflow
+  uses: dragoscops/workflow-trigger-wait@v3
+  with:
+    credentials: |
+      {
+        "appId": "${{ vars.GH_APP_ID }}",
+        "privateKey": "empty",
+        "owner": "dragoscops"
+      }
+    ...
+  env:
+    GH_APP_PRIVATE_KEY: |
+      ${{ secrets.GH_APP_PRIVATE_KEY_RAW }}
 ```
 
 #### Trigger and Perform Additional Actions Before Waiting
@@ -87,9 +161,12 @@ jobs:
     steps:
       - name: Trigger Workflow
         id: trigger
-        uses: dragoscops/workflow-trigger-wait@v2
+        uses: dragoscops/workflow-trigger-wait@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          credentials: |
+            {
+              "token": "${{ secrets.GH_TOKEN }}"
+            }
           repo: "owner/target-repo"
           workflow_id: "workflow.yml"
           ref: "main"
@@ -99,9 +176,12 @@ jobs:
       # Additional actions can be performed here before waiting
 
       - name: Wait for Workflow Completion
-        uses: dragoscops/workflow-trigger-wait@v2
+        uses: dragoscops/workflow-trigger-wait@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          credentials: |
+            {
+              "token": "${{ secrets.GH_TOKEN }}"
+            }
           repo: "owner/target-repo"
           run_id: ${{ steps.trigger.outputs.run_id }}
           action: "wait-only"

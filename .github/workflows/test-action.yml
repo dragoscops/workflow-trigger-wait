@@ -199,7 +199,7 @@ jobs:
           action: 'trigger-and-wait'
           debug: 'yes'
         env:
-          GITHUB_APP_PRIVATE_KEY: |
+          GH_APP_PRIVATE_KEY: |
             ${{ secrets.GH_APP_PRIVATE_KEY_RAW }}
 
       - name: '[7] (github-app) Verify Outputs'
