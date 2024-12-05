@@ -178,8 +178,8 @@ jobs:
 
           sleep 30
 
-      - name: '[7] (github-app) Run Simple Trigger And Wait (By Given Owner - Detecting Global InstallationId)'
-        id: run-app-owner-trigger-and-wait
+      - name: '[7a] (github-app) Run Simple Trigger And Wait (By Given Owner - Detecting Global InstallationId)'
+        id: run-app-owner-a-trigger-and-wait
         uses: dragoscops/workflow-trigger-wait@main
         with:
           credentials: |
@@ -202,10 +202,41 @@ jobs:
           GH_APP_PRIVATE_KEY: |
             ${{ secrets.GH_APP_PRIVATE_KEY_RAW }}
 
-      - name: '[7] (github-app) Verify Outputs'
+      - name: '[7a] (github-app) Verify Outputs'
         run: |
-          echo "Run Conclusion: ${{ steps.run-app-owner-trigger-and-wait.outputs.run_conclusion }}"
-          if [[ "${{ steps.run-app-owner-trigger-and-wait.outputs.run_conclusion }}" != "success" ]]; then exit 1; fi
+          echo "Run Conclusion: ${{ steps.run-app-owner-a-trigger-and-wait.outputs.run_conclusion }}"
+          if [[ "${{ steps.run-app-owner-a-trigger-and-wait.outputs.run_conclusion }}" != "success" ]]; then exit 1; fi
+
+          sleep 30
+
+      - name: '[7b] (github-app) Run Simple Trigger And Wait (By Given Owner - Detecting Global InstallationId)'
+        id: run-app-owner-b-trigger-and-wait
+        uses: dragoscops/workflow-trigger-wait@main
+        with:
+          credentials: |
+            {
+              "app": {
+                "appId": "${{ secrets.GH_APP_ID }}",
+                "privateKey": "in-env",
+                "owner": "${{ github.repository_owner }}"
+              }
+            }
+          repo: ${{ github.repository }}
+          workflow_id: 'test-workflow.yml'
+          ref: 'main'
+          inputs: '{"Timeout": "5"}'
+          wait_interval: '10000'
+          timeout: '60000'
+          action: 'trigger-and-wait'
+          debug: 'yes'
+        env:
+          GITHUB_APP_PRIVATE_KEY: |
+            ${{ secrets.GH_APP_PRIVATE_KEY_RAW }}
+
+      - name: '[7b] (github-app) Verify Outputs'
+        run: |
+          echo "Run Conclusion: ${{ steps.run-app-owner-b-trigger-and-wait.outputs.run_conclusion }}"
+          if [[ "${{ steps.run-app-owner-b-trigger-and-wait.outputs.run_conclusion }}" != "success" ]]; then exit 1; fi
 
           sleep 30
 
