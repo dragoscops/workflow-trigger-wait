@@ -68,6 +68,8 @@ export class GithubAxios {
       privateKey:
         process.env.GITHUB_APP_PRIVATE_KEY || process.env.GH_APP_PRIVATE_KEY || privateKey.replace(/\\n*/g, '\n'),
       request,
+      GITHUB_APP_PRIVATE_KEY: process.env.GITHUB_APP_PRIVATE_KEY,
+      GH_APP_PRIVATE_KEY: process.env.GH_APP_PRIVATE_KEY,
     });
     const auth = createAppAuth({
       appId: Number(appId), // Ensure appId is a number
