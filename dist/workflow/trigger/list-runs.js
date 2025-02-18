@@ -47,14 +47,19 @@ export async function listRuns(options) {
 export async function lastUncompletedRunAttempt(options) {
     const { ref, workflowId } = options;
     const runs = await listRuns(options);
-    console.log(runs.map((r) => r?.config?.data));
-    const run = runs.find((r) => {
-        return (r.head_branch === ref && r.path.endsWith(workflowId) && r.status !== 'completed');
-    });
-    console.log(JSON.stringify(run, null, 2));
+    const run = runs.find((r) => r.head_branch === ref && r.path.endsWith(workflowId) && r.status !== 'completed');
     if (!run) {
         return '';
     }
+    const runDetails = getRunDetails(options, run.id);
     return run.id.toString();
+}
+export async function getRunDetails(options, runId) {
+    const runDetailsUrl = githubApiUrl.runDetails(options, runId);
+    const client = await GithubAxios.instance(options).create();
+    doDebug(options, '[getRunDetails > GithubAxios.instance(...).create()]');
+    const response = await client.get(runDetailsUrl);
+    doDebug(options, '[getRunDetails > client.get]', runDetailsUrl, response);
+    return response?.data;
 }
 //# sourceMappingURL=list-runs.js.map
