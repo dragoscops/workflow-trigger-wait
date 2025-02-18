@@ -13,8 +13,8 @@ export class GithubApiUrl {
     workflowRunStatus({ repo, runId }) {
         return `/repos/${repo}/actions/runs/${runId}`;
     }
-    runsList({ repo }) {
-        return `/repos/${repo}/actions/runs`;
+    runsList({ repo, workflowId }) {
+        return `/repos/${repo}/actions/workflows/${workflowId}/runs`;
     }
 }
 //# sourceMappingURL=api-url.js.map

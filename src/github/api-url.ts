@@ -20,7 +20,8 @@ export class GithubApiUrl {
     return `/repos/${repo}/actions/runs/${runId}`;
   }
 
-  runsList({repo}: Options): string {
-    return `/repos/${repo}/actions/runs`;
+  runsList({repo, workflowId}: Options): string {
+    // return `/repos/${repo}/actions/runs`;
+    return `/repos/${repo}/actions/workflows/${workflowId}/runs`;
   }
 }
