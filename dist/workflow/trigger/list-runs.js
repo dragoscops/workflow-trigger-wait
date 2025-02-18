@@ -48,7 +48,7 @@ export async function listRuns(options) {
 export async function lastUncompletedRunAttempt(options) {
     const { ref, workflowId, inputs } = options;
     const runs = await listRuns(options);
-    console.log(runs.map((r) => r.config.data));
+    console.log(runs.map((r) => r?.config?.data));
     const run = runs.find((r) => {
         const data = JSON.parse(r?.config?.data ?? '{}');
         return (r.head_branch === ref &&
