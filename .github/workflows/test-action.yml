@@ -41,7 +41,7 @@ jobs:
     # needs:
     #   - unit-test-action
     steps:
-      - name: '[1] (token) Run Simple Trigger And Wait'
+      - name: '[1] (token) Run Simple Trigger And Wait (No Run Pattern)'
         id: run-simple-trigger-and-wait
         uses: dragoscops/workflow-trigger-wait@main
         with:
@@ -59,6 +59,28 @@ jobs:
         run: |
           echo "Run Conclusion: ${{ steps.run-simple-trigger-and-wait.outputs.run_conclusion }}"
           if [[ "${{ steps.run-simple-trigger-and-wait.outputs.run_conclusion }}" != "success" ]]; then exit 1; fi
+
+          sleep 30
+
+      - name: '[2] (token) Run Simple Trigger And Wait (Using String RunPattern to detect the run)'
+        id: run-string-pattern-trigger-and-wait
+        uses: dragoscops/workflow-trigger-wait@main
+        with:
+          credentials: '{ "token": "${{ secrets.GH_TOKEN }}" }'
+          repo: ${{ github.repository }}
+          workflow_id: 'test-workflow.yml'
+          ref: 'main'
+          inputs: '{"Timeout": "5", "RunPattern": "run-pattern"}'
+          wait_interval: '10000'
+          timeout: '60000'
+          action: 'trigger-and-wait'
+          debug: 'yes'
+          run_pattern: 'run-pattern'
+
+      - name: '[2] (token) Verify Outputs'
+        run: |
+          echo "Run Conclusion: ${{ steps.run-string-pattern-trigger-and-wait.outputs.run_conclusion }}"
+          if [[ "${{ steps.run-string-pattern-trigger-and-wait.outputs.run_conclusion }}" != "success" ]]; then exit 1; fi
 
           sleep 30
 
