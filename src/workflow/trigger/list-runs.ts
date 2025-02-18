@@ -27,7 +27,7 @@ export async function lastUncompletedRun(options: Options): Promise<string> {
       runId = await lastUncompletedRunAttempt(options);
     } catch (error) {
       console.log(attempt, 'attempt failed');
-      doDebug(options, '[determineWorkflowRunId > determineWorkflowRunIdAttempt]', error);
+      doDebug(options, '[lastUncompletedRun > lastUncompletedRunAttempt]', error);
       throw new DetermineWorkflowIdError(`Failed to get workflow run ID: ${errorMessage(error)}`, {cause: error});
     }
 
@@ -69,7 +69,8 @@ export async function listRuns(options: Options): Promise<WorkflowRun[]> {
 
   const client = await GithubAxios.instance(options).create();
   const response = await client.get(runsListUrl);
-  doDebug(options, '[determineWorkflowRunIdAttempt > axios.get]', runsListUrl, response);
+  doDebug(options, '[listRuns > axios.get]', runsListUrl, response);
+  doDebug(options, '[listRuns > axios.get]', JSON.stringify(response, null, 2));
 
   return response?.data?.workflow_runs ?? [];
 }
