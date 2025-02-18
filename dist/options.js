@@ -16,6 +16,7 @@ export const defaultOptions = {
     action: actionTriggerAndWait,
     noThrow: 'false',
     runId: '',
+    runPattern: '',
     determineRunId: {
         pollingInterval: 500,
         maxPollingAttempts: 3,
@@ -67,6 +68,7 @@ export function processOptions() {
         action: core.getInput('action'),
         noThrow: core.getInput('no_throw') || 'false',
         runId: core.getInput('run_id'),
+        runPattern: core.getInput('run_pattern'),
         debug: core.getInput('debug') || 'no',
     };
     const { action } = options;

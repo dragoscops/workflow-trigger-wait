@@ -16,8 +16,5 @@ export class GithubApiUrl {
     runsList({ repo, workflowId }) {
         return `/repos/${repo}/actions/workflows/${workflowId}/runs`;
     }
-    runDetails({ repo }, runId) {
-        return `/repos/${repo}/actions/runs/${runId}`;
-    }
 }
 //# sourceMappingURL=api-url.js.map

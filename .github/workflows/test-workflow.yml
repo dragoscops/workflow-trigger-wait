@@ -1,31 +1,39 @@
 name: Test Workflow
+run-name: Test Workflow (${{ inputs.RunPattern || 'no-pattern' }})
 
 on:
   workflow_dispatch:
     inputs:
       Timeout:
-       description: 'Timeout for the action in minutes'
-       required: true
-       default: "5"
-       type: string
+        description: 'Timeout for the action in minutes'
+        required: true
+        default: '5'
+        type: string
       Throw:
-       description: 'Throw error'
-       required: true
-       default: "no"
-       type: string
+        description: 'Throw error'
+        required: true
+        default: 'no'
+        type: string
+      RunPattern:
+        description: 'Run Pattern'
+        required: false
+        type: string
   workflow_call:
     inputs:
       Timeout:
-       description: 'Timeout for the action in minutes'
-       required: true
-       default: "5"
-       type: string
+        description: 'Timeout for the action in minutes'
+        required: true
+        default: '5'
+        type: string
       Throw:
-       description: 'Throw error'
-       required: true
-       default: "no"
-       type: string
-
+        description: 'Throw error'
+        required: true
+        default: 'no'
+        type: string
+      RunPattern:
+        description: 'Run Pattern'
+        required: false
+        type: string
 
 jobs:
   test:
@@ -33,12 +41,11 @@ jobs:
 
     steps:
       - name: Test Step
-        run:
-          echo "Test workflow started";
+        run: echo "Test workflow started";
           echo "Sleeping ${{ inputs.Timeout }} seconds";
           sleep ${{ inputs.Timeout }};
           if [[ "${{ inputs.Throw }}" == "yes" ]]; then
-            echo "Throwing error";
-            exit 1;
+          echo "Throwing error";
+          exit 1;
           fi;
           echo "Test workflow ended";

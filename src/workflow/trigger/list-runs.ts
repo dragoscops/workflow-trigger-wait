@@ -49,6 +49,7 @@ interface WorkflowRun {
   head_branch: string;
   status: string;
   path: string;
+  name: string;
   [key: string]: unknown;
 }
 
@@ -64,31 +65,21 @@ export async function listRuns(options: Options): Promise<WorkflowRun[]> {
 }
 
 export async function lastUncompletedRunAttempt(options: Options): Promise<string> {
-  const {ref, workflowId} = options;
-  // const {ref, workflowId, inputs} = options;
+  const {ref, workflowId, runPattern} = options;
 
   const runs = await listRuns(options);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 
   const run = runs.find(
-    (r: WorkflowRun) => r.head_branch === ref && r.path.endsWith(workflowId) && r.status !== 'completed',
+    (r: WorkflowRun) =>
+      r.head_branch === ref &&
+      r.path.endsWith(workflowId) &&
+      r.status !== 'completed' &&
+      (runPattern ? r.name.includes(runPattern) || new RegExp(runPattern).test(r.name) : true),
   );
   if (!run) {
     return '';
   }
 
-  const runDetails = getRunDetails(options, run.id);
-
   return run.id.toString();
-}
-
-export async function getRunDetails(options: Options, runId: number): Promise<any> {
-  const runDetailsUrl = githubApiUrl.runDetails(options, runId);
-
-  const client = await GithubAxios.instance(options).create();
-  doDebug(options, '[getRunDetails > GithubAxios.instance(...).create()]');
-  const response = await client.get(runDetailsUrl);
-  doDebug(options, '[getRunDetails > client.get]', runDetailsUrl, response);
-
-  return response?.data;
 }

@@ -43,7 +43,7 @@ inputs:
     description: 'Run ID of the workflow to wait for (required for wait-only action)'
     required: false
   run_pattern:
-    description: 'Pattern to match run IDs of the workflow to wait for (required for trigger-and-wait and trigger-only actions)'
+    description: 'Pattern for the workflow (to wait for) name (required for trigger-and-wait and trigger-only actions)'
     required: false
   no_throw:
     description: |

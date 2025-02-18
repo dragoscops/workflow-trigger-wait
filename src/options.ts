@@ -35,6 +35,7 @@ export type Options = {
   action: ActionType;
   noThrow: string;
   runId: string;
+  runPattern: string;
   determineRunId?: {
     pollingInterval?: number;
     maxPollingAttempts?: number;
@@ -53,6 +54,7 @@ export const defaultOptions: Options = {
   action: actionTriggerAndWait,
   noThrow: 'false',
   runId: '',
+  runPattern: '',
   determineRunId: {
     pollingInterval: 500,
     maxPollingAttempts: 3,
@@ -99,7 +101,7 @@ export function processOptions() {
     throw new InputError('Invalid Github App credentials');
   }
 
-  const options = {
+  const options: Options = {
     credentials,
     repo: core.getInput('repo'),
     workflowId: core.getInput('workflow_id'),
@@ -110,6 +112,7 @@ export function processOptions() {
     action: core.getInput('action') as ActionType,
     noThrow: core.getInput('no_throw') || 'false',
     runId: core.getInput('run_id'),
+    runPattern: core.getInput('run_pattern'),
     debug: core.getInput('debug') || 'no',
   };
 
