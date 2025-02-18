@@ -78,6 +78,7 @@ export async function lastUncompletedRunAttempt(options: Options): Promise<strin
   const {ref, workflowId, inputs} = options;
 
   const runs = await listRuns(options);
+  console.log(runs);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const run = runs.find((r: WorkflowRun) => {
     const data: WorkflowRunConfigData = JSON.parse(r?.config?.data ?? '{}');
