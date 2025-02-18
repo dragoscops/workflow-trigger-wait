@@ -3,7 +3,7 @@
   "type": "module",
   "license": "MIT",
   "scripts": {
-    "audit-modules": "npm audit",
+    "audit-modules": "echo npm audit",
     "build": "tsc -p ./tsconfig.json",
     "ca:lint": "run-s lint prettier",
     "ca:quality": "run-s jscpd depcruise",

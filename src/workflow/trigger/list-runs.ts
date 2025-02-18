@@ -64,6 +64,7 @@ export async function lastUncompletedRunAttempt(options: Options): Promise<strin
   const {ref, workflowId} = options;
 
   const runs = await listRuns(options);
+  console.log(runs);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const run = runs.find(
     (r: WorkflowRun) => r.head_branch === ref && r.path.endsWith(workflowId) && r.status !== 'completed',

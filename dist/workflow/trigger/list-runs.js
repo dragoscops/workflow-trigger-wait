@@ -45,6 +45,7 @@ export async function listRuns(options) {
 export async function lastUncompletedRunAttempt(options) {
     const { ref, workflowId } = options;
     const runs = await listRuns(options);
+    console.log(runs);
     const run = runs.find((r) => r.head_branch === ref && r.path.endsWith(workflowId) && r.status !== 'completed');
     if (!run) {
         return '';
