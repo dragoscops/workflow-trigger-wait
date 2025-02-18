@@ -12,18 +12,18 @@ export async function createWorkflow(options) {
     core.info(`Calling ${workflowUrl}@${ref}`);
     try {
         const client = await GithubAxios.instance(options).create();
-        doDebug(options, '[createGithubClient]', client);
+        doDebug(options, '[createWorkflow > GithubAxios.instance(...).create()]', client);
         const response = await client.post(workflowUrl, {
             ref,
             inputs,
         });
-        doDebug(options, '[createWorkflow > axios.post]', workflowUrl, response);
+        doDebug(options, '[createWorkflow > client.post]', workflowUrl, response);
         if (response.status !== 204) {
             throw new Error(response.statusText);
         }
     }
     catch (error) {
-        doDebug(options, '[createWorkflow > axios.post]', workflowUrl, error);
+        doDebug(options, '[createWorkflow > client.post]', workflowUrl, error);
         throw new Error(`Failed to trigger workflow: ${errorMessage(error)}`);
     }
     core.info(`Called ${workflowUrl}@${ref}`);

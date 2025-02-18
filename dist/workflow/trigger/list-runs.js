@@ -24,7 +24,7 @@ export async function lastUncompletedRun(options) {
         }
         catch (error) {
             console.log(attempt, 'attempt failed');
-            doDebug(options, '[determineWorkflowRunId > determineWorkflowRunIdAttempt]', error);
+            doDebug(options, '[lastUncompletedRun > lastUncompletedRunAttempt]', error);
             throw new DetermineWorkflowIdError(`Failed to get workflow run ID: ${errorMessage(error)}`, { cause: error });
         }
         if (runId) {
@@ -40,20 +40,23 @@ export async function lastUncompletedRun(options) {
 export async function listRuns(options) {
     const runsListUrl = githubApiUrl.runsList(options);
     const client = await GithubAxios.instance(options).create();
+    doDebug(options, '[listRuns > GithubAxios.instance(...).create()]');
     const response = await client.get(runsListUrl);
-    doDebug(options, '[determineWorkflowRunIdAttempt > axios.get]', runsListUrl, response);
+    doDebug(options, '[listRuns > client.get]', runsListUrl, response);
+    doDebug(options, '[listRuns > client.get]', JSON.stringify(response, null, 2));
     return response?.data?.workflow_runs ?? [];
 }
 export async function lastUncompletedRunAttempt(options) {
     const { ref, workflowId, inputs } = options;
     const runs = await listRuns(options);
+    console.log(runs);
     const run = runs.find((r) => {
         const data = JSON.parse(r?.config?.data ?? '{}');
         return (r.head_branch === ref &&
             r.path.endsWith(workflowId) &&
             r.status !== 'completed' &&
             data.ref === ref &&
-            isDeepStrictEqual(data.inputs, inputs));
+            isDeepStrictEqual(data.inputs, inputs ?? {}));
     });
     if (!run) {
         return '';

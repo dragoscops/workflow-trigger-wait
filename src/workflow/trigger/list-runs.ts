@@ -83,12 +83,14 @@ export async function lastUncompletedRunAttempt(options: Options): Promise<strin
   console.log(runs);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const run = runs.find((r: WorkflowRun) => {
-    // const data: WorkflowRunConfigData = JSON.parse(r?.config?.data ?? '{}');
+    const data: WorkflowRunConfigData = JSON.parse(r?.config?.data ?? '{}');
 
     return (
-      r.head_branch === ref && r.path.endsWith(workflowId) && r.status !== 'completed'
-      // && data.ref === ref
-      // && isDeepStrictEqual(data.inputs, inputs ?? {})
+      r.head_branch === ref &&
+      r.path.endsWith(workflowId) &&
+      r.status !== 'completed' &&
+      data.ref === ref &&
+      isDeepStrictEqual(data.inputs, inputs ?? {})
     );
   });
   if (!run) {
