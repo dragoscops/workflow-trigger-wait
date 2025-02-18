@@ -29,7 +29,7 @@ export async function triggerWorkflow(options: Options): Promise<string> {
   try {
     return lastUncompletedRun(options);
   } catch (error) {
-    doDebug(options, '[triggerWorkflow > determineWorkflowRunId]', error);
+    doDebug(options, '[triggerWorkflow > lastUncompletedRun]', error);
     throw new TriggerWorkflowError(`Failed to read workflow id: ${errorMessage(error)}`, {cause: error});
   }
 }

@@ -68,9 +68,10 @@ export async function listRuns(options: Options): Promise<WorkflowRun[]> {
   const runsListUrl = githubApiUrl.runsList(options);
 
   const client = await GithubAxios.instance(options).create();
+  doDebug(options, '[listRuns > GithubAxios.instance(...).create()]');
   const response = await client.get(runsListUrl);
-  doDebug(options, '[listRuns > axios.get]', runsListUrl, response);
-  doDebug(options, '[listRuns > axios.get]', JSON.stringify(response, null, 2));
+  doDebug(options, '[listRuns > client.get]', runsListUrl, response);
+  doDebug(options, '[listRuns > client.get]', JSON.stringify(response, null, 2));
 
   return response?.data?.workflow_runs ?? [];
 }
