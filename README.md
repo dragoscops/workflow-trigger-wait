@@ -14,6 +14,7 @@ This GitHub Action facilitates triggering workflows in a different repository an
     - [Outputs](#outputs)
   - [Example Workflows](#example-workflows)
     - [Trigger and Wait](#trigger-and-wait)
+    - [Trigger with `run_pattern`](#trigger-with-runpattern)
     - [Trigger Using GitHub App](#trigger-using-github-app)
       - [Using `privateKey`:](#using-privatekey)
       - [Using `GH_APP_PRIVATE_KEY` Environment Variable:](#using-gh_app_private_key-environment-variable)
@@ -33,6 +34,7 @@ This GitHub Action facilitates triggering workflows in a different repository an
   - `trigger-and-wait` (default): Triggers the workflow and waits for it to complete.
   - `trigger-only`: Triggers the workflow without waiting for its completion.
   - `wait-only`: Waits for the completion of a specific workflow using its `run_id`.
+- **Filter Runs by Pattern:** Use `runPattern` to filter workflow runs based on the run name using string matching or regular expressions.
 - **Configurable Inputs:** Dynamic inputs allow for customizable and flexible behavior.
 - **Robust Error Handling:**
   - Use `no_throw` to suppress errors and capture them in outputs.
@@ -44,30 +46,40 @@ This GitHub Action facilitates triggering workflows in a different repository an
 - **GitHub App Credentials (Optional):** If using a GitHub App for authentication, ensure you have the `appId`, `privateKey`.
 
 > [!IMPORTANT]
-> In case you wish to use a Github App token for authentication, there is no limitation to the token, however, remember that *an installation access token expires after 1 hour*. To benefit the capability to use a token refresh mechanism for authentication, use our `app` configuration for authentication. The `app` configuration allows this Github Action to mimic [create-github-app-token](https://github.com/actions/create-github-app-token), generating a github app token, however it makes sure the token is refreshed/re-generated when it is close to expire.
+> In case you wish to use a GitHub App token for authentication, there is no limitation to the token. However, remember that 
+> *an installation access token expires after 1 hour*. To benefit from the capability to use a token refresh mechanism for 
+> authentication, use our `app` configuration for authentication. The `app` configuration allows this GitHub Action to mimic 
+> [create-github-app-token](https://github.com/actions/create-github-app-token), generating a GitHub app token. However, it 
+> makes sure the token is refreshed/re-generated when it is close to expiring.
+
+> [!IMPORTANT]
+> It is not recommended to trigger multiple workflows of the same type unless you use the `run_pattern` input for detection. 
+> Triggering multiple workflows of the same type without the `run_pattern` may end up in returning the wrong run id which may 
+> lead into false positives/negatives.
 
 ## Usage
 
 ### Inputs
 
-| Name              | Required | Default             | Description                                                                                                                                 |
-|-------------------|----------|---------------------|---------------------------------------------------------------------------------------------------------------------------------------------|
-| `credentials`     | **Yes**  | N/A                 | GitHub credentials provided as a JSON string. It can include a personal access token or GitHub App credentials.                                |
-| `repo`            | No       | N/A                 | Target repository in the format `owner/repo`.                                                                                                 |
-| `workflow_id`     | No       | N/A                 | Workflow file name or ID to trigger (e.g., `workflow.yml` or its numeric ID).                                                               |
-| `ref`             | No       | `main`              | Git reference (branch, tag, or commit SHA) for the workflow run.                                                                             |
-| `inputs`          | No       | `{}`                | JSON string of inputs for the workflow.                                                                                                      |
-| `wait_interval`   | No       | `10s`               | Interval between status checks (e.g., `30s`, `1m`).                                                                                          |
-| `timeout`         | No       | `1h`                | Maximum time to wait for workflow completion (e.g., `15m`, `2h`).                                                                            |
-| `action`          | No       | `trigger-and-wait`  | Mode of operation: `trigger-and-wait`, `trigger-only`, or `wait-only`.                                                                       |
-| `run_id`          | No       | N/A                 | Workflow run ID (required for `wait-only` mode).                                                                                             |
-| `no_throw`        | No       | `false`             | Suppresses errors if set to `true` or `yes`, allowing the action to continue and capture errors in outputs instead of failing.                  |
-| `debug`           | No       | `no`                | Enables debug logs if set to `true` or `yes`, providing more detailed information in the action logs for troubleshooting.                      |
-| `app_id`          | No       | N/A                 | GitHub App ID for authentication. Required if using GitHub App credentials.                                                                   |
-| `private_key`     | No       | N/A                 | Private key for GitHub App authentication. Can be provided as a PEM string joined by `\n` or via an environment variable (`GH_APP_PRIVATE_KEY`). |
-| `installation_id` | No       | N/A                 | Installation ID for the GitHub App. Required if not provided within the `credentials` JSON.                                                   |
-| `owner`           | No       | N/A                 | Owner of the repository. If not provided, defaults to the owner extracted from the `GITHUB_REPOSITORY` environment variable.                    |
-| `repositories`    | No       | N/A                 | List of repositories for the GitHub App. If not provided, defaults to the repository extracted from the `GITHUB_REPOSITORY` environment variable.|
+| Name              | Required | Default             | Description                                                                                                                                                                                                                                          |
+|-------------------|----------|---------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `credentials`     | **Yes**  | N/A                 | GitHub credentials provided as a JSON string. It can include a personal access token or GitHub App credentials.                                                                                                                                      |
+| `repo`            | No       | N/A                 | Target repository in the format `owner/repo`.                                                                                                                                                                                                         |
+| `workflow_id`     | No       | N/A                 | Workflow file name or ID to trigger (e.g., `workflow.yml` or its numeric ID).                                                                                                                                                                        |
+| `ref`             | No       | `main`              | Git reference (branch, tag, or commit SHA) for the workflow run.                                                                                                                                                                                      |
+| `inputs`          | No       | `{}`                | JSON string of inputs for the workflow.                                                                                                                                                                                                               |
+| `wait_interval`   | No       | `10s`               | Interval between status checks (e.g., `30s`, `1m`).                                                                                                                                                                                                   |
+| `timeout`         | No       | `1h`                | Maximum time to wait for workflow completion (e.g., `15m`, `2h`).                                                                                                                                                                                     |
+| `action`          | No       | `trigger-and-wait`  | Mode of operation: `trigger-and-wait`, `trigger-only`, or `wait-only`.                                                                                                                                                                                |
+| `run_id`          | No       | N/A                 | Workflow run ID (required for `wait-only` mode).                                                                                                                                                                                                      |
+| `run_pattern`     | No       | N/A                 | Pattern to filter workflow runs by name when waiting for completion. Supports string matching and regular expressions.                                                                                                                                |
+| `no_throw`        | No       | `false`             | Suppresses errors if set to `true` or `yes`, allowing the action to continue and capture errors in outputs instead of failing.                                                                                                                        |
+| `debug`           | No       | `no`                | Enables debug logs if set to `true` or `yes`, providing more detailed information in the action logs for troubleshooting.                                                                                                                             |
+| `app_id`          | No       | N/A                 | GitHub App ID for authentication. Required if using GitHub App credentials.                                                                                                                                                                           |
+| `private_key`     | No       | N/A                 | Private key for GitHub App authentication. Can be provided as a PEM string joined by `\n` or via an environment variable (`GH_APP_PRIVATE_KEY`).                                                                                                       |
+| `installation_id` | No       | N/A                 | Installation ID for the GitHub App. Required if not provided within the `credentials` JSON.                                                                                                                                                           |
+| `owner`           | No       | N/A                 | Owner of the repository. If not provided, defaults to the owner extracted from the `GITHUB_REPOSITORY` environment variable.                                                                                                                          |
+| `repositories`    | No       | N/A                 | List of repositories for the GitHub App. If not provided, defaults to the repository extracted from the `GITHUB_REPOSITORY` environment variable.                                                                                                     |
 
 #### Credentials
 
@@ -76,8 +88,8 @@ This GitHub Action facilitates triggering workflows in a different repository an
 | `token`  | No       | N/A     | GitHub Token with necessary permissions. |
 | `app`    | No       | N/A     | GitHub App credentials as a nested JSON. |
 
-> [!NOTE] 
-> If `token` is not specified, the Github Action will look for `app`.
+> **Note**
+> If `token` is not specified, the GitHub Action will look for `app`.
 
 ##### Credentials: GitHub App
 
@@ -89,17 +101,17 @@ This GitHub Action facilitates triggering workflows in a different repository an
 | `owner`          | No       | N/A     | Owner of the GitHub App                                 |
 | `repositories`   | No       | N/A     | List of repositories the GitHub App has access to       |
 
-> [!NOTE] 
-> Since `credentials` is a JSON string, the `privateKey` **can not** be provided as a PEM in raw format. To pass the private key correctly, join the PEM lines using `\\n` or provide it through the `GH_APP_PRIVATE_KEY` environment variable.
+> **Note**
+> Since `credentials` is a JSON string, the `privateKey` **cannot** be provided as a PEM in raw format. To pass the private key correctly, join the PEM lines using `\\n` or provide it through the `GH_APP_PRIVATE_KEY` environment variable.
 
 - **Example of Joining PEM Lines:**
-  
+
   ```javascript
   console.log(require("fs").readFileSync("/path/to/key.pem").toString().replace(/\n/g, "\\n"));
   ```
 
 - **Example Using Environment Variable:**
-  
+
   ```yaml
   - name: Trigger and Wait for Workflow
     uses: dragoscops/workflow-trigger-wait@v3
@@ -125,7 +137,7 @@ Ensure that sensitive information such as `token`, `appId`, `privateKey`, and `i
 | Name             | Description                                                                 |
 |------------------|-----------------------------------------------------------------------------|
 | `run_id`         | The workflow run ID of the triggered workflow.                              |
-| `run_conclusion` | The conclusion of the workflow run (`success`, `failure`, `timeout`, etc.). |
+| `run_conclusion` | The conclusion of the workflow run (`success`, `failure`, `timed_out`, etc.). |
 
 ## Example Workflows
 
@@ -158,6 +170,39 @@ jobs:
           timeout: "15m"
           action: "trigger-and-wait"
 ```
+
+### Trigger with `run_pattern`
+
+Triggers a workflow and waits for the completion of a specific run matching the `runPattern`.
+
+```yaml
+name: Trigger and Wait for Specific Workflow Run
+
+on:
+  workflow_dispatch:
+
+jobs:
+  trigger-and-wait:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger and Wait for Workflow Run Matching Pattern
+        uses: dragoscops/workflow-trigger-wait@v3
+        with:
+          credentials: |
+            {
+              "token": "${{ secrets.GH_TOKEN }}"
+            }
+          repo: "owner/target-repo"
+          workflow_id: "workflow.yml"
+          ref: "main"
+          inputs: '{"key": "value"}'
+          runPattern: "^Deploy to Production$"
+          wait_interval: "30s"
+          timeout: "15m"
+          action: "trigger-and-wait"
+```
+
+In this example, the action will trigger the specified workflow and wait for a workflow run whose name matches the regular expression `^Deploy to Production$`.
 
 ### Trigger Using GitHub App
 
@@ -252,15 +297,18 @@ jobs:
           repo: "owner/target-repo"
           run_id: ${{ steps.trigger.outputs.run_id }}
           action: "wait-only"
+          runPattern: "Deploy to Production"
           wait_interval: "15s"
           timeout: "20m"
 ```
+
+In the above example, `runPattern` can be used in the `wait-only` action to wait for a specific run matching the pattern.
 
 ## Modes of Operation
 
 1. **`trigger-and-wait` (default):** Triggers the workflow and waits for it to complete.
 2. **`trigger-only`:** Only triggers the workflow without waiting for its completion.
-3. **`wait-only`:** Waits for a specific workflow to complete. Requires a `run_id`.
+3. **`wait-only`:** Waits for a specific workflow to complete. Requires a `run_id` or can use `runPattern` to identify the run.
 
 Choose the appropriate mode based on your workflow coordination needs.
 

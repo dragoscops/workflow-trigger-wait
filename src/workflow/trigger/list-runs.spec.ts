@@ -21,9 +21,14 @@ const mockRunsListUrlResponse = {
       head_branch: defaultOptions.ref,
       path: defaultOptions.workflowId,
       status: 'in_progress',
-      config: {
-        data: JSON.stringify({ref: defaultOptions.ref, inputs: defaultOptions.inputs}),
-      },
+      name: 'Deploy to Production',
+    },
+    {
+      id: 67890,
+      head_branch: defaultOptions.ref,
+      path: defaultOptions.workflowId,
+      status: 'in_progress',
+      name: 'Deploy to Staging',
     },
   ],
 };
@@ -42,6 +47,52 @@ describe('list-runs', () => {
   });
 
   describe('lastUncompletedRunAttempt', () => {
+    it('should return a matching workflow run ID when runPattern matches the name', async () => {
+      const options = {...defaultOptions, runPattern: 'Production'};
+
+      // Mock GET response with workflow runs
+      mock.onGet(mockRunsListUrl).reply(200, mockRunsListUrlResponse);
+
+      const runId = await lastUncompletedRunAttempt(options);
+      expect(runId).toBe('12345');
+      expect(mock.history.get.length).toBe(1); // Ensure the GET request was made
+      expect(mock.history.get[0].url).toBe(mockRunsListUrl);
+    });
+
+    it('should return an empty string when runPattern does not match any run names', async () => {
+      const options = {...defaultOptions, runPattern: 'QA'};
+
+      // Mock GET response with workflow runs
+      mock.onGet(mockRunsListUrl).reply(200, mockRunsListUrlResponse);
+
+      const runId = await lastUncompletedRunAttempt(options);
+      expect(runId).toBe('');
+      expect(mock.history.get.length).toBe(1); // Ensure the GET request was made
+      expect(mock.history.get[0].url).toBe(mockRunsListUrl);
+    });
+
+    it('should correctly match runPattern using regex', async () => {
+      const options = {...defaultOptions, runPattern: '^Deploy to (Production|Staging)$'};
+
+      // Mock GET response with workflow runs
+      mock.onGet(mockRunsListUrl).reply(200, mockRunsListUrlResponse);
+
+      const runId = await lastUncompletedRunAttempt(options);
+      expect(runId).toBe('12345'); // Returns the first match
+      expect(mock.history.get.length).toBe(1); // Ensure the GET request was made
+    });
+
+    it('should return an empty string if runPattern regex does not match any run names', async () => {
+      const options = {...defaultOptions, runPattern: '^Deploy to QA$'};
+
+      // Mock GET response with workflow runs
+      mock.onGet(mockRunsListUrl).reply(200, mockRunsListUrlResponse);
+
+      const runId = await lastUncompletedRunAttempt(options);
+      expect(runId).toBe('');
+      expect(mock.history.get.length).toBe(1); // Ensure the GET request was made
+    });
+
     it('should return a matching workflow run ID', async () => {
       // Mock GET response with a matching workflow run
       mock.onGet(mockRunsListUrl).reply(200, mockRunsListUrlResponse);
