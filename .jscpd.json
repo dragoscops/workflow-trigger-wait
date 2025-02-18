@@ -1,15 +1,8 @@
 {
   "absolute": true,
   "blame": true,
-  "ignore": [
-    "**/__snapshots__/**",
-    "**/*.min.js",
-    "**/*.map"
-  ],
+  "ignore": ["**/__snapshots__/**", "**/*.min.js", "**/*.map", "**/*.spec.ts"],
   "output": ".jscpd",
-  "reporters": [
-    "console",
-    "badge"
-  ],
+  "reporters": ["console", "badge"],
   "threshold": 0.1
 }

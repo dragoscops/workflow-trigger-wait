@@ -14,7 +14,7 @@ This GitHub Action facilitates triggering workflows in a different repository an
     - [Outputs](#outputs)
   - [Example Workflows](#example-workflows)
     - [Trigger and Wait](#trigger-and-wait)
-    - [Trigger with `run_pattern`](#trigger-with-runpattern)
+    - [Trigger with `run_pattern`](#trigger-with-run_pattern)
     - [Trigger Using GitHub App](#trigger-using-github-app)
       - [Using `privateKey`:](#using-privatekey)
       - [Using `GH_APP_PRIVATE_KEY` Environment Variable:](#using-gh_app_private_key-environment-variable)
@@ -34,7 +34,7 @@ This GitHub Action facilitates triggering workflows in a different repository an
   - `trigger-and-wait` (default): Triggers the workflow and waits for it to complete.
   - `trigger-only`: Triggers the workflow without waiting for its completion.
   - `wait-only`: Waits for the completion of a specific workflow using its `run_id`.
-- **Filter Runs by Pattern:** Use `runPattern` to filter workflow runs based on the run name using string matching or regular expressions.
+- **Filter Runs by Pattern:** Use `run_pattern` to filter workflow runs based on the run name using string matching or regular expressions.
 - **Configurable Inputs:** Dynamic inputs allow for customizable and flexible behavior.
 - **Robust Error Handling:**
   - Use `no_throw` to suppress errors and capture them in outputs.
@@ -173,7 +173,7 @@ jobs:
 
 ### Trigger with `run_pattern`
 
-Triggers a workflow and waits for the completion of a specific run matching the `runPattern`.
+Triggers a workflow and waits for the completion of a specific run matching the `run_pattern`.
 
 ```yaml
 name: Trigger and Wait for Specific Workflow Run
@@ -196,7 +196,7 @@ jobs:
           workflow_id: "workflow.yml"
           ref: "main"
           inputs: '{"key": "value"}'
-          runPattern: "^Deploy to Production$"
+          run_pattern: "^Deploy to Production$"
           wait_interval: "30s"
           timeout: "15m"
           action: "trigger-and-wait"
@@ -297,18 +297,18 @@ jobs:
           repo: "owner/target-repo"
           run_id: ${{ steps.trigger.outputs.run_id }}
           action: "wait-only"
-          runPattern: "Deploy to Production"
+          run_pattern: "Deploy to Production"
           wait_interval: "15s"
           timeout: "20m"
 ```
 
-In the above example, `runPattern` can be used in the `wait-only` action to wait for a specific run matching the pattern.
+In the above example, `run_pattern` can be used in the `wait-only` action to wait for a specific run matching the pattern.
 
 ## Modes of Operation
 
 1. **`trigger-and-wait` (default):** Triggers the workflow and waits for it to complete.
 2. **`trigger-only`:** Only triggers the workflow without waiting for its completion.
-3. **`wait-only`:** Waits for a specific workflow to complete. Requires a `run_id` or can use `runPattern` to identify the run.
+3. **`wait-only`:** Waits for a specific workflow to complete. Requires a `run_id` or can use `run_pattern` to identify the run.
 
 Choose the appropriate mode based on your workflow coordination needs.
 
