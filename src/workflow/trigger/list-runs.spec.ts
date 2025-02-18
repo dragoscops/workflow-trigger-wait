@@ -21,6 +21,9 @@ const mockRunsListUrlResponse = {
       head_branch: defaultOptions.ref,
       path: defaultOptions.workflowId,
       status: 'in_progress',
+      config: {
+        data: JSON.stringify({ref: defaultOptions.ref, inputs: defaultOptions.inputs}),
+      },
     },
   ],
 };
@@ -51,9 +54,7 @@ describe('list-runs', () => {
 
     it('should return an empty string if no matching workflow run is found', async () => {
       // Mock GET response with no matching workflow runs
-      mock.onGet(mockRunsListUrl).reply(200, {
-        workflow_runs: [],
-      });
+      mock.onGet(mockRunsListUrl).reply(200, mockRunsListUrlResponseEmpty);
 
       const runId = await lastUncompletedRunAttempt(defaultOptions);
       expect(runId).toBe('');

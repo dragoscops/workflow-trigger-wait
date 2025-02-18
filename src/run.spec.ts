@@ -33,7 +33,17 @@ describe('runAction', () => {
     // Mock polling for workflow run ID
     mock.onGet(runListUrl).replyOnce(200, {workflow_runs: []}); // No run found
     mock.onGet(runListUrl).replyOnce(200, {
-      workflow_runs: [{id: '12345', head_branch: options.ref, path: options.workflowId, status: 'in_progress'}],
+      workflow_runs: [
+        {
+          id: '12345',
+          head_branch: options.ref,
+          path: options.workflowId,
+          status: 'in_progress',
+          config: {
+            data: JSON.stringify({ref: options.ref, inputs: options.inputs}),
+          },
+        },
+      ],
     });
     // Mock polling for workflow completion
     mock.onGet(runStatusUrl).replyOnce(200, {status: 'in_progress'});

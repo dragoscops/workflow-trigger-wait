@@ -4,6 +4,7 @@ import { doDebug } from '../../options.js';
 import { sleep, errorMessage, GenericError } from '../../utils.js';
 import { GithubApiUrl } from '../../github/api-url.js';
 import { GithubUrl } from '../../github/url.js';
+import { isDeepStrictEqual } from 'util';
 const githubApiUrl = GithubApiUrl.getInstance();
 const githubUrl = GithubUrl.getInstance();
 class DetermineWorkflowIdError extends GenericError {
@@ -22,6 +23,7 @@ export async function lastUncompletedRun(options) {
             runId = await lastUncompletedRunAttempt(options);
         }
         catch (error) {
+            console.log(attempt, 'attempt failed');
             doDebug(options, '[determineWorkflowRunId > determineWorkflowRunIdAttempt]', error);
             throw new DetermineWorkflowIdError(`Failed to get workflow run ID: ${errorMessage(error)}`, { cause: error });
         }
@@ -43,10 +45,16 @@ export async function listRuns(options) {
     return response?.data?.workflow_runs ?? [];
 }
 export async function lastUncompletedRunAttempt(options) {
-    const { ref, workflowId } = options;
+    const { ref, workflowId, inputs } = options;
     const runs = await listRuns(options);
-    console.log(runs);
-    const run = runs.find((r) => r.head_branch === ref && r.path.endsWith(workflowId) && r.status !== 'completed');
+    const run = runs.find((r) => {
+        const data = JSON.parse(r?.config?.data ?? '{}');
+        return (r.head_branch === ref &&
+            r.path.endsWith(workflowId) &&
+            r.status !== 'completed' &&
+            data.ref === ref &&
+            isDeepStrictEqual(data.inputs, inputs));
+    });
     if (!run) {
         return '';
     }

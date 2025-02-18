@@ -5,6 +5,7 @@ import {doDebug, Options} from '../../options.js';
 import {sleep, errorMessage, GenericError} from '../../utils.js';
 import {GithubApiUrl} from '../../github/api-url.js';
 import {GithubUrl} from '../../github/url.js';
+import {isDeepStrictEqual} from 'util';
 
 const githubApiUrl = GithubApiUrl.getInstance();
 const githubUrl = GithubUrl.getInstance();
@@ -25,6 +26,7 @@ export async function lastUncompletedRun(options: Options): Promise<string> {
     try {
       runId = await lastUncompletedRunAttempt(options);
     } catch (error) {
+      console.log(attempt, 'attempt failed');
       doDebug(options, '[determineWorkflowRunId > determineWorkflowRunIdAttempt]', error);
       throw new DetermineWorkflowIdError(`Failed to get workflow run ID: ${errorMessage(error)}`, {cause: error});
     }
@@ -42,11 +44,23 @@ export async function lastUncompletedRun(options: Options): Promise<string> {
   throw new DetermineWorkflowIdError('Failed to get workflow run ID after multiple polling attempts');
 }
 
+interface WorkflowRunConfigData {
+  ref: string;
+  inputs: Record<string, unknown>;
+}
+
+interface WorkflowRunConfig {
+  data: string;
+  // You can add additional config properties if needed:
+  [key: string]: unknown;
+}
+
 interface WorkflowRun {
   id: number;
   head_branch: string;
   status: string;
   path: string;
+  config: WorkflowRunConfig;
   [key: string]: unknown;
 }
 
@@ -61,14 +75,21 @@ export async function listRuns(options: Options): Promise<WorkflowRun[]> {
 }
 
 export async function lastUncompletedRunAttempt(options: Options): Promise<string> {
-  const {ref, workflowId} = options;
+  const {ref, workflowId, inputs} = options;
 
   const runs = await listRuns(options);
-  console.log(runs);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const run = runs.find(
-    (r: WorkflowRun) => r.head_branch === ref && r.path.endsWith(workflowId) && r.status !== 'completed',
-  );
+  const run = runs.find((r: WorkflowRun) => {
+    const data: WorkflowRunConfigData = JSON.parse(r?.config?.data ?? '{}');
+
+    return (
+      r.head_branch === ref &&
+      r.path.endsWith(workflowId) &&
+      r.status !== 'completed' &&
+      data.ref === ref &&
+      isDeepStrictEqual(data.inputs, inputs)
+    );
+  });
   if (!run) {
     return '';
   }
