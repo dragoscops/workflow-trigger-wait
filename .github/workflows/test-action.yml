@@ -43,7 +43,7 @@ jobs:
     steps:
       - name: '[1] (token) Run Simple Trigger And Wait'
         id: run-simple-trigger-and-wait
-        uses: ./workflow-trigger-wait
+        uses: dragoscops/workflow-trigger-wait@main
         with:
           credentials: '{ "token": "${{ secrets.GH_TOKEN }}" }'
           repo: ${{ github.repository }}
@@ -55,12 +55,12 @@ jobs:
           action: 'trigger-and-wait'
           debug: 'yes'
 
-      # - name: '[1] (token) Verify Outputs'
-      #   run: |
-      #     echo "Run Conclusion: ${{ steps.run-simple-trigger-and-wait.outputs.run_conclusion }}"
-      #     if [[ "${{ steps.run-simple-trigger-and-wait.outputs.run_conclusion }}" != "success" ]]; then exit 1; fi
+      - name: '[1] (token) Verify Outputs'
+        run: |
+          echo "Run Conclusion: ${{ steps.run-simple-trigger-and-wait.outputs.run_conclusion }}"
+          if [[ "${{ steps.run-simple-trigger-and-wait.outputs.run_conclusion }}" != "success" ]]; then exit 1; fi
 
-      #     sleep 30
+          sleep 30
 
       # - name: '[2] (token) Run Trigger Only'
       #   id: run-trigger-only
