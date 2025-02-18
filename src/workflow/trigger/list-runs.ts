@@ -87,7 +87,7 @@ export async function lastUncompletedRunAttempt(options: Options): Promise<strin
       r.path.endsWith(workflowId) &&
       r.status !== 'completed' &&
       data.ref === ref &&
-      isDeepStrictEqual(data.inputs, inputs)
+      isDeepStrictEqual(data.inputs, inputs ?? {})
     );
   });
   if (!run) {
