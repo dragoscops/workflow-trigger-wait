@@ -71,7 +71,6 @@ export async function listRuns(options: Options): Promise<WorkflowRun[]> {
   doDebug(options, '[listRuns > GithubAxios.instance(...).create()]');
   const response = await client.get(runsListUrl);
   doDebug(options, '[listRuns > client.get]', runsListUrl, response);
-  doDebug(options, '[listRuns > client.get]', JSON.stringify(response.data, null, 2));
 
   return response?.data?.workflow_runs ?? [];
 }
@@ -80,7 +79,7 @@ export async function lastUncompletedRunAttempt(options: Options): Promise<strin
   const {ref, workflowId, inputs} = options;
 
   const runs = await listRuns(options);
-  console.log(runs);
+  console.log(runs.map((r) => r.config.data));
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const run = runs.find((r: WorkflowRun) => {
     const data: WorkflowRunConfigData = JSON.parse(r?.config?.data ?? '{}');

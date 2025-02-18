@@ -43,13 +43,12 @@ export async function listRuns(options) {
     doDebug(options, '[listRuns > GithubAxios.instance(...).create()]');
     const response = await client.get(runsListUrl);
     doDebug(options, '[listRuns > client.get]', runsListUrl, response);
-    doDebug(options, '[listRuns > client.get]', JSON.stringify(response.data, null, 2));
     return response?.data?.workflow_runs ?? [];
 }
 export async function lastUncompletedRunAttempt(options) {
     const { ref, workflowId, inputs } = options;
     const runs = await listRuns(options);
-    console.log(runs);
+    console.log(runs.map((r) => r.config.data));
     const run = runs.find((r) => {
         const data = JSON.parse(r?.config?.data ?? '{}');
         return (r.head_branch === ref &&
