@@ -84,6 +84,28 @@ jobs:
 
           sleep 30
 
+      - name: '[3] (token) Run Simple Trigger And Wait (Using RegExp RunPattern to detect the run)'
+        id: run-regexp-pattern-trigger-and-wait
+        uses: dragoscops/workflow-trigger-wait@main
+        with:
+          credentials: '{ "token": "${{ secrets.GH_TOKEN }}" }'
+          repo: ${{ github.repository }}
+          workflow_id: 'test-workflow.yml'
+          ref: 'main'
+          inputs: '{"Timeout": "5", "RunPattern": "run-pattern"}'
+          wait_interval: '10000'
+          timeout: '60000'
+          action: 'trigger-and-wait'
+          debug: 'yes'
+          run_pattern: 'run-\w+ern'
+
+      - name: '[3] (token) Verify Outputs'
+        run: |
+          echo "Run Conclusion: ${{ steps.run-regexp-pattern-trigger-and-wait.outputs.run_conclusion }}"
+          if [[ "${{ steps.run-regexp-pattern-trigger-and-wait.outputs.run_conclusion }}" != "success" ]]; then exit 1; fi
+
+          sleep 30
+
       # - name: '[2] (token) Run Trigger Only'
       #   id: run-trigger-only
       #   uses: dragoscops/workflow-trigger-wait@main

@@ -22,7 +22,6 @@ export async function lastUncompletedRun(options) {
             runId = await lastUncompletedRunAttempt(options);
         }
         catch (error) {
-            console.log(attempt, 'attempt failed');
             doDebug(options, '[lastUncompletedRun > lastUncompletedRunAttempt]', error);
             throw new DetermineWorkflowIdError(`Failed to get workflow run ID: ${errorMessage(error)}`, { cause: error });
         }

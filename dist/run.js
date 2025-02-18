@@ -10,7 +10,6 @@ export default async function run() {
         core.setOutput('run_conclusion', 'success');
     }
     catch (err) {
-        console.log(err);
         const conclusion = err instanceof GenericError ? err.runConclusion ?? 'unknown' : 'unknown';
         core.setOutput('run_conclusion', conclusion);
         core.info(`Run Conclusion: ${conclusion}`);
