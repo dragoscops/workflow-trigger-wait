@@ -5,7 +5,7 @@ import {doDebug, Options} from '../../options.js';
 import {sleep, errorMessage, GenericError} from '../../utils.js';
 import {GithubApiUrl} from '../../github/api-url.js';
 import {GithubUrl} from '../../github/url.js';
-import {isDeepStrictEqual} from 'util';
+// import {isDeepStrictEqual} from 'util';
 
 const githubApiUrl = GithubApiUrl.getInstance();
 const githubUrl = GithubUrl.getInstance();
@@ -44,10 +44,10 @@ export async function lastUncompletedRun(options: Options): Promise<string> {
   throw new DetermineWorkflowIdError('Failed to get workflow run ID after multiple polling attempts');
 }
 
-interface WorkflowRunConfigData {
-  ref: string;
-  inputs: Record<string, unknown>;
-}
+// interface WorkflowRunConfigData {
+//   ref: string;
+//   inputs: Record<string, unknown>;
+// }
 
 interface WorkflowRunConfig {
   data: string;
@@ -76,22 +76,22 @@ export async function listRuns(options: Options): Promise<WorkflowRun[]> {
 }
 
 export async function lastUncompletedRunAttempt(options: Options): Promise<string> {
-  const {ref, workflowId, inputs} = options;
+  const {ref, workflowId} = options;
+  // const {ref, workflowId, inputs} = options;
 
   const runs = await listRuns(options);
   console.log(runs.map((r) => r?.config?.data));
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const run = runs.find((r: WorkflowRun) => {
-    const data: WorkflowRunConfigData = JSON.parse(r?.config?.data ?? '{}');
+    // const data: WorkflowRunConfigData = JSON.parse(r?.config?.data ?? '{}');
 
     return (
-      r.head_branch === ref &&
-      r.path.endsWith(workflowId) &&
-      r.status !== 'completed' &&
-      data.ref === ref &&
-      isDeepStrictEqual(data.inputs, inputs ?? {})
+      r.head_branch === ref && r.path.endsWith(workflowId) && r.status !== 'completed' // &&
+      // data.ref === ref &&
+      // isDeepStrictEqual(data.inputs, inputs ?? {})
     );
   });
+  console.log(JSON.stringify(run, null, 2));
   if (!run) {
     return '';
   }
