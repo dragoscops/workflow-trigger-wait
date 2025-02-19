@@ -28,7 +28,7 @@ export async function lastUncompletedRun(options) {
         if (runId) {
             core.info(`Workflow run ID: ${runId}`);
             core.setOutput('run_id', runId);
-            core.info(`For more info, visit ${githubUrl.workflowDetailsId(options)}`);
+            core.info(`For more info, visit ${githubUrl.workflowDetailsId({ ...options, runId })}`);
             return runId;
         }
         await sleep(pollingInterval);
@@ -45,6 +45,9 @@ export async function listRuns(options) {
 }
 export async function lastUncompletedRunAttempt(options) {
     const { ref, workflowId, runPattern } = options;
+    if (runPattern) {
+        doDebug(options, '[lastUncompletedRunAttempt]', `Runs filtered by pattern: '${runPattern}'`);
+    }
     const runs = await listRuns(options);
     const run = runs.find((r) => r.head_branch === ref &&
         r.path.endsWith(workflowId) &&
