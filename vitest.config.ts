@@ -1,12 +1,28 @@
-import {defineConfig} from 'vitest/config';
+import templDefineConfig from '@templ-project/vitest';
 
-export default defineConfig({
-  test: {
-    globals: true,
-    environment: 'node',
-    coverage: {
-      reporter: ['text', 'json', 'html'],
+/** @type {import('vitest').ViteUserConfig} */
+export default templDefineConfig({
+  // Custom test file patterns
+  include: ['src/**/*.spec.ts'],
+  // setupFiles: ['./vitest.setup.js'],
+  retry: 3,
+  allowOnly: true,
+  poolOptions: {
+    threads: {
+      maxThreads: 1, // Limit the maximum number of threads to 1
     },
-    testTimeout: 10000,
+  },
+
+  // Custom coverage settings
+  coverage: {
+    threshold: {
+      global: {
+        branches: 80,
+        functions: 80,
+        lines: 80,
+        statements: 80,
+      },
+    },
+    exclude: ['src/legacy/**/*'],
   },
 });

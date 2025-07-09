@@ -2,11 +2,11 @@
 /* eslint-disable max-len */
 /* eslint-disable max-lines-per-function */
 
-import {describe, it, expect, beforeEach, vi} from 'vitest';
-import axios from 'axios';
 import {createAppAuth, InstallationAccessTokenAuthentication} from '@octokit/auth-app';
 import {request} from '@octokit/request';
 
+import axios from 'axios';
+import {describe, it, expect, beforeEach, vi} from 'vitest';
 import {GithubAxios, CreateGithubAppTokenError} from './axios.js';
 import {defaultOptionsForApp} from '../options.js';
 import {InputError} from '../utils.js';
@@ -99,7 +99,7 @@ describe('GithubClient', () => {
       expect(token).toBe(mockToken);
     });
 
-    it('should return the provided token when credentials include a token', async () => {
+    it('should return the provided token when credentials include app settings', async () => {
       const mockToken = 'personal-access-token';
 
       const githubClient = GithubAxios.instance(defaultOptionsForApp);

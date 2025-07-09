@@ -1,10 +1,10 @@
 import * as core from '@actions/core';
 
-import {GithubAxios} from '../../github/axios.js';
-import {doDebug, Options} from '../../options.js';
-import {sleep, errorMessage, GenericError} from '../../utils.js';
-import {GithubApiUrl} from '../../github/api-url.js';
-import {GithubUrl} from '../../github/url.js';
+import { GithubApiUrl } from '../../github/api-url.js';
+import { GithubAxios } from '../../github/axios.js';
+import { GithubUrl } from '../../github/url.js';
+import { doDebug, Options } from '../../options.js';
+import { sleep, errorMessage, GenericError } from '../../utils.js';
 // import {isDeepStrictEqual} from 'util';
 
 const githubApiUrl = GithubApiUrl.getInstance();
@@ -18,7 +18,7 @@ export async function lastUncompletedRun(options: Options): Promise<string> {
     maxPollingAttempts: 12, // 1 minute
     ...(options.determineRunId ?? {}),
   };
-  const {maxPollingAttempts, pollingInterval} = determineRunId;
+  const { maxPollingAttempts, pollingInterval } = determineRunId;
   let runId = '';
 
   for (let attempt = 1; attempt <= maxPollingAttempts; attempt++) {
@@ -27,13 +27,13 @@ export async function lastUncompletedRun(options: Options): Promise<string> {
       runId = await lastUncompletedRunAttempt(options);
     } catch (error) {
       doDebug(options, '[lastUncompletedRun > lastUncompletedRunAttempt]', error);
-      throw new DetermineWorkflowIdError(`Failed to get workflow run ID: ${errorMessage(error)}`, {cause: error});
+      throw new DetermineWorkflowIdError(`Failed to get workflow run ID: ${errorMessage(error)}`, { cause: error });
     }
 
     if (runId) {
       core.info(`Workflow run ID: ${runId}`);
       core.setOutput('run_id', runId);
-      core.info(`For more info, visit ${githubUrl.workflowDetailsId({...options, runId})}`);
+      core.info(`For more info, visit ${githubUrl.workflowDetailsId({ ...options, runId })}`);
       return runId;
     }
 
@@ -64,7 +64,7 @@ export async function listRuns(options: Options): Promise<WorkflowRun[]> {
 }
 
 export async function lastUncompletedRunAttempt(options: Options): Promise<string> {
-  const {ref, workflowId, runPattern} = options;
+  const { ref, workflowId, runPattern } = options;
   if (runPattern) {
     doDebug(options, '[lastUncompletedRunAttempt]', `Runs filtered by pattern: '${runPattern}'`);
   }

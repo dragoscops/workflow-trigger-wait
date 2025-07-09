@@ -1,7 +1,7 @@
 import * as core from '@actions/core';
 import parseDuration from 'parse-duration';
 
-import {errorMessage, InputError} from './utils.js';
+import { errorMessage, InputError } from './utils.js';
 
 export const actionTriggerAndWait = 'trigger-and-wait';
 export const actionTriggerOnly = 'trigger-only';
@@ -44,11 +44,11 @@ export type Options = {
 };
 
 export const defaultOptions: Options = {
-  credentials: {token: 'fake-token'},
+  credentials: { token: 'fake-token' },
   repo: 'owner/repo',
   workflowId: 'deploy.yml',
   ref: 'main',
-  inputs: {key: 'value'},
+  inputs: { key: 'value' },
   waitInterval: 500,
   timeout: 2000,
   action: actionTriggerAndWait,
@@ -116,7 +116,7 @@ export function processOptions() {
     debug: core.getInput('debug') || 'no',
   };
 
-  const {action} = options;
+  const { action } = options;
 
   if (!actionTypes.includes(action)) {
     throw new InputError(`Invalid action: ${action}`);

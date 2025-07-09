@@ -2,10 +2,10 @@
 import '@actions/core';
 import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
-import {describe, it, expect, beforeEach, afterEach} from 'vitest';
-import {createWorkflow} from './create.js';
-import {GithubApiUrl} from '../../github/api-url.js';
-import {defaultOptions} from '../../options.js';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { createWorkflow } from './create.js';
+import { GithubApiUrl } from '../../github/api-url.js';
+import { defaultOptions } from '../../options.js';
 
 describe('createWorkflow', () => {
   let mock: MockAdapter;
@@ -37,7 +37,7 @@ describe('createWorkflow', () => {
   });
 
   it('should throw an error if the response status is not 204', async () => {
-    mock.onPost(mockWorkflowDispatchUrl).reply(400, {message: 'Bad Request'});
+    mock.onPost(mockWorkflowDispatchUrl).reply(400, { message: 'Bad Request' });
 
     await expect(createWorkflow(defaultOptions)).rejects.toThrow(
       'Failed to trigger workflow: Request failed with status code 400',

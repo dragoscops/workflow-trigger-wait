@@ -1,7 +1,5 @@
-#!/bin/sh
-
 npm run ca
-npm run test
+
 npm run build
 
-git add -u
+git add .

@@ -1,14 +1,13 @@
 import * as core from '@actions/core';
 import {createAppAuth, InstallationAccessTokenAuthentication} from '@octokit/auth-app';
 import {request} from '@octokit/request';
+import type * as OctokitTypes from '@octokit/types';
 import axios, {AxiosInstance} from 'axios';
 import {createCache} from 'cache-manager';
-// eslint-disable-next-line import/no-named-as-default
 import Keyv from 'keyv';
-import {errorMessage, GenericError, InputError} from '../utils.js';
-import {doDebug, Options} from '../options.js';
-import type * as OctokitTypes from '@octokit/types';
 import pRetry from 'p-retry';
+import {doDebug, Options} from '../options.js';
+import {errorMessage, GenericError, InputError} from '../utils.js';
 
 export class GithubAxios {
   private readonly tokenCache = createCache({
