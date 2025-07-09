@@ -42387,7 +42387,7 @@ async function run() {
         core.setOutput('run_conclusion', 'success');
     }
     catch (err) {
-        const conclusion = err instanceof utils_GenericError ? err.runConclusion ?? 'unknown' : 'unknown';
+        const conclusion = err instanceof utils_GenericError ? (err.runConclusion ?? 'unknown') : 'unknown';
         core.setOutput('run_conclusion', conclusion);
         core.info(`Run Conclusion: ${conclusion}`);
         core.info(`Error: ${errorMessage(err)}`);
