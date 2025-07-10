@@ -33,6 +33,7 @@ export async function lastUncompletedRun(options: Options): Promise<string> {
     if (runId) {
       core.info(`Workflow run ID: ${runId}`);
       core.setOutput('run_id', runId);
+      core.setOutput('run_url', githubUrl.workflowDetailsId({ ...options, runId }));
       core.info(`For more info, visit ${githubUrl.workflowDetailsId({ ...options, runId })}`);
       return runId;
     }
