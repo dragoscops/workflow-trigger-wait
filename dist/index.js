@@ -32660,11 +32660,23 @@ function processOptions() {
     catch (error) {
         throw new InputError(`Invalid JSON for credentials: ${errorMessage(error)}`);
     }
-    if (!credentials.token && !credentials.app) {
-        throw new InputError(`You must provide either a 'token' or 'app' in credentials.`);
+    if (credentials.app) {
+        if (!credentials.app.privateKey) {
+            credentials.app.privateKey = process.env[credentials.app.privateKeyEnvVarName ?? 'GITHUB_APP_PRIVATE_KEY'] || '';
+        }
+        else {
+            credentials.app.privateKey = Buffer.from(credentials.app.privateKey, 'base64').toString('utf-8');
+        }
+        if (credentials.app.privateKey) {
+            credentials.app.privateKey = credentials.app.privateKey.trim().replace(/\\n/g, '\n');
+        }
+        console.log(credentials.app);
+        if (!credentials.app.appId || !credentials.app.privateKey) {
+            throw new InputError('Invalid Github App Credentials');
+        }
     }
-    if (credentials.app && (!credentials.app?.appId || !credentials.app?.privateKey)) {
-        throw new InputError('Invalid Github App credentials');
+    if (!credentials.app && !credentials.token) {
+        throw new InputError('You must provide a valid GitHub Token or valid Github App details in credentials.');
     }
     const options = {
         credentials,
@@ -42084,12 +42096,12 @@ class GithubAxios {
         }
         doDebug(this.options, '[createAppAuth]', {
             appId: Number(appId),
-            privateKey: process.env.GITHUB_APP_PRIVATE_KEY || process.env.GH_APP_PRIVATE_KEY || privateKey.replace(/\\n*/g, '\n'),
+            privateKey,
             request: dist_bundle_request,
         });
         const auth = createAppAuth({
             appId: Number(appId),
-            privateKey: process.env.GITHUB_APP_PRIVATE_KEY || process.env.GH_APP_PRIVATE_KEY || privateKey.replace(/\\n*/g, '\n'),
+            privateKey,
             request: dist_bundle_request,
         });
         const authentication = await this.authenticateApp(auth, dist_bundle_request);

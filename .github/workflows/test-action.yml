@@ -7,8 +7,17 @@ on:
     branches:
       - main
 
+env:
+  TOKEN_CREDENTIALS: '{ "token": "${{ secrets.GH_TOKEN_WF_TRIGGER }}" }'
+  REPO: ${{ github.repository }}
+  WORKFLOW_ID: "test-workflow.yml"
+  REF: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
+  WAIT_INTERVAL: "10s"
+  TIMEOUT: "10m"
+  DEBUG: "yes"
+
 jobs:
-  unit-test-action:
+  unit-test:
     runs-on: ubuntu-latest
 
     steps:
@@ -34,375 +43,274 @@ jobs:
       - name: Build Action
         run: npm run build
 
-  workflow-test-action:
+  # Single job for the no-pattern test (must run alone)
+  integration-tests-token-no-pattern:
+    name: Triggering With Token
     runs-on: ubuntu-latest
     needs:
-      - unit-test-action
+      - unit-test
     steps:
-      # Check out the repository code
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: "[1] (token) Run Simple Trigger And Wait (No Run Pattern)"
-        id: run-simple-trigger-and-wait
+      - name: "Should Pass Without Using Run Pattern"
+        id: test-simple
         uses: ./
         with:
-          credentials: '{ "token": "${{ secrets.GH_TOKEN_WF_TRIGGER }}" }'
-          repo: ${{ github.repository }}
-          workflow_id: "test-workflow.yml"
-          ref: ${{ github.ref_name }}
+          credentials: ${{ env.TOKEN_CREDENTIALS }}
+          repo: ${{ env.REPO }}
+          workflow_id: ${{ env.WORKFLOW_ID }}
+          ref: ${{ env.REF }}
           inputs: '{"Timeout": "5"}'
-          wait_interval: "10000"
-          timeout: "60000"
+          wait_interval: ${{ env.WAIT_INTERVAL }}
+          timeout: ${{ env.TIMEOUT }}
           action: "trigger-and-wait"
-          debug: "yes"
+          debug: ${{ env.DEBUG }}
 
-      - name: "[1] (token) Verify Outputs"
+      - name: "Validate"
         run: |
-          echo "Run Conclusion: ${{ steps.run-simple-trigger-and-wait.outputs.run_conclusion }}"
-          if [[ "${{ steps.run-simple-trigger-and-wait.outputs.run_conclusion }}" != "success" ]]; then exit 1; fi
+          test "${{ steps.test-simple.outputs.run_conclusion }}" = "success"
 
-          sleep 30
+  # Matrix job for pattern-based tests that can run in parallel
+  integration-tests-token-pattern:
+    name: Triggering With Token and Run Pattern
+    runs-on: ubuntu-latest
+    needs:
+      - integration-tests-token-no-pattern
+    strategy:
+      matrix:
+        test_case:
+          - name: "Using String Pattern Detection"
+            pattern_id: "string"
+            inputs: '{"Timeout": "5", "RunPattern": "string-pattern-${{ github.run_id }}"}'
+            run_pattern: "string-pattern-${{ github.run_id }}"
+            expected: "success"
+          - name: "Using RegExp Pattern Detection"
+            pattern_id: "regexp"
+            inputs: '{"Timeout": "5", "RunPattern": "regexp-pattern-${{ github.run_id }}"}'
+            run_pattern: 'regexp-pattern-\d+'
+            expected: "success"
+          - name: "Throwing Error Handling"
+            pattern_id: "error"
+            inputs: '{"Timeout": "5", "Throw": "yes", "RunPattern": "error-pattern-${{ github.run_id }}"}'
+            run_pattern: "error-pattern-${{ github.run_id }}"
+            expected: "failure"
+            no_throw: "yes"
+          - name: "Managing Timeout Handling"
+            pattern_id: "timeout"
+            inputs: '{"Timeout": "5", "RunPattern": "timeout-pattern-${{ github.run_id }}"}'
+            run_pattern: "timeout-pattern-${{ github.run_id }}"
+            expected: "timeout"
+            wait_interval: "1000"
+            timeout: "3000"
+            no_throw: "yes"
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-      - name: "[2] (token) Run Simple Trigger And Wait (Using String RunPattern to detect the run)"
-        id: run-string-pattern-trigger-and-wait
+      - name: "Should Pass ${{ matrix.test_case.name }} (ID: ${{ matrix.test_case.pattern_id }}-${{ github.run_id }})"
+        id: test-action
         uses: ./
         with:
-          credentials: '{ "token": "${{ secrets.GH_TOKEN_WF_TRIGGER }}" }'
-          repo: ${{ github.repository }}
-          workflow_id: "test-workflow.yml"
-          ref: ${{ github.ref_name }}
-          inputs: '{"Timeout": "5", "RunPattern": "run-pattern"}'
-          wait_interval: "10000"
-          timeout: "60000"
+          credentials: ${{ env.TOKEN_CREDENTIALS }}
+          repo: ${{ env.REPO }}
+          workflow_id: ${{ env.WORKFLOW_ID }}
+          ref: ${{ env.REF }}
+          inputs: ${{ matrix.test_case.inputs }}
+          wait_interval: ${{ matrix.test_case.wait_interval || env.WAIT_INTERVAL }}
+          timeout: ${{ matrix.test_case.timeout || env.TIMEOUT }}
           action: "trigger-and-wait"
-          debug: "yes"
-          run_pattern: "run-pattern"
+          debug: ${{ env.DEBUG }}
+          run_pattern: ${{ matrix.test_case.run_pattern }}
+          no_throw: ${{ matrix.test_case.no_throw || '' }}
 
-      - name: "[2] (token) Verify Outputs"
+      - name: "Validate"
         run: |
-          echo "Run Conclusion: ${{ steps.run-string-pattern-trigger-and-wait.outputs.run_conclusion }}"
-          if [[ "${{ steps.run-string-pattern-trigger-and-wait.outputs.run_conclusion }}" != "success" ]]; then exit 1; fi
+          test "${{ steps.test-action.outputs.run_conclusion }}" = "${{ matrix.test_case.expected }}"
 
-          sleep 30
+  # Sequential job for trigger/wait dependency tests
+  integration-tests-token-trigger-and-wait:
+    name: Triggering and Waiting Separately
+    runs-on: ubuntu-latest
+    needs:
+      - integration-tests-token-no-pattern
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-      - name: "[3] (token) Run Simple Trigger And Wait (Using RegExp RunPattern to detect the run)"
-        id: run-regexp-pattern-trigger-and-wait
-        uses: ./
-        with:
-          credentials: '{ "token": "${{ secrets.GH_TOKEN_WF_TRIGGER }}" }'
-          repo: ${{ github.repository }}
-          workflow_id: "test-workflow.yml"
-          ref: ${{ github.ref_name }}
-          inputs: '{"Timeout": "5", "RunPattern": "run-regexp-pattern"}'
-          wait_interval: "10000"
-          timeout: "60000"
-          action: "trigger-and-wait"
-          debug: "yes"
-          run_pattern: 'run-\w+-pattern'
-
-      - name: "[3] (token) Verify Outputs"
-        run: |
-          echo "Run Conclusion: ${{ steps.run-regexp-pattern-trigger-and-wait.outputs.run_conclusion }}"
-          if [[ "${{ steps.run-regexp-pattern-trigger-and-wait.outputs.run_conclusion }}" != "success" ]]; then exit 1; fi
-
-          sleep 30
-
-      - name: "[4] (token) Run Trigger Only"
+      - name: "Should Pas Trigger Only"
         id: run-trigger-only
         uses: ./
         with:
-          credentials: '{ "token": "${{ secrets.GH_TOKEN_WF_TRIGGER }}" }'
-          repo: ${{ github.repository }}
-          workflow_id: "test-workflow.yml"
-          ref: ${{ github.ref_name }}
-          inputs: '{"Timeout": "5"}'
-          wait_interval: "10000"
-          timeout: "60000"
+          credentials: ${{ env.TOKEN_CREDENTIALS }}
+          repo: ${{ env.REPO }}
+          workflow_id: ${{ env.WORKFLOW_ID }}
+          ref: ${{ env.REF }}
+          inputs: '{"Timeout": "5", "RunPattern": "trigger-only-${{ github.run_id }}"}'
+          wait_interval: ${{ env.WAIT_INTERVAL }}
+          timeout: ${{ env.TIMEOUT }}
           action: "trigger-only"
-          debug: "yes"
+          debug: ${{ env.DEBUG }}
+          run_pattern: "trigger-only-${{ github.run_id }}"
 
-      - name: "[4] (token) Verify Outputs"
+      - name: "Validate"
         run: |
-          echo "Run Id: ${{ steps.run-trigger-only.outputs.run_id }}"
-          echo "Run Conclusion: ${{ steps.run-trigger-only.outputs.run_conclusion }}"
-          if [[ "${{ steps.run-trigger-only.outputs.run_conclusion }}" != "success" ]]; then exit 1; fi
+          test "${{ steps.run-trigger-only.outputs.run_conclusion }}" = "success"
+          test -n "${{ steps.run-trigger-only.outputs.run_id }}"
 
-          sleep 30
-
-      - name: "[5] (token) Run Wait Only"
+      - name: "Should Pass Wait Only"
         id: run-wait-only
         uses: ./
         with:
-          credentials: '{ "token": "${{ secrets.GH_TOKEN_WF_TRIGGER }}" }'
-          repo: ${{ github.repository }}
-          workflow_id: "test-workflow.yml"
-          ref: ${{ github.ref_name }}
-          inputs: '{"Timeout": "5"}'
-          wait_interval: "10000"
-          timeout: "60000"
+          credentials: ${{ env.TOKEN_CREDENTIALS }}
+          repo: ${{ env.REPO }}
+          workflow_id: ${{ env.WORKFLOW_ID }}
+          ref: ${{ env.REF }}
+          inputs: '{"Timeout": "5", "RunPattern": "wait-only-${{ github.run_id }}"}'
+          wait_interval: ${{ env.WAIT_INTERVAL }}
+          timeout: ${{ env.TIMEOUT }}
           action: "wait-only"
-          debug: "yes"
+          debug: ${{ env.DEBUG }}
           run_id: "${{ steps.run-trigger-only.outputs.run_id }}"
 
-      - name: "[5] (token) Verify Outputs"
+      - name: "[5] Verify Wait Only Success"
         run: |
-          echo "Run Conclusion: ${{ steps.run-wait-only.outputs.run_conclusion }}"
-          if [[ "${{ steps.run-wait-only.outputs.run_conclusion }}" != "success" ]]; then exit 1; fi
+          test "${{ steps.run-wait-only.outputs.run_conclusion }}" = "success"
 
-          sleep 30
+  # Single job for the no-pattern test (must run alone)
+  integration-tests-app-apd-private-key:
+    name: Triggering With App Id and Private Key
+    runs-on: ubuntu-latest
+    needs:
+      - integration-tests-token-pattern
+      - integration-tests-token-trigger-and-wait
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-      - name: "[6] (token) Run Timeout Trigger And Wait"
-        id: run-throw-trigger-and-wait
-        uses: ./
-        with:
-          credentials: '{ "token": "${{ secrets.GH_TOKEN_WF_TRIGGER }}" }'
-          repo: ${{ github.repository }}
-          workflow_id: "test-workflow.yml"
-          ref: ${{ github.ref_name }}
-          inputs: '{"Timeout": "5", "Throw": "yes"}'
-          wait_interval: "10000"
-          timeout: "60000"
-          action: "trigger-and-wait"
-          debug: "yes"
-          no_throw: "yes"
-
-      - name: "[6] (token) Verify Outputs"
-        run: |
-          echo "Run Conclusion: ${{ steps.run-throw-trigger-and-wait.outputs.run_conclusion }}"
-          if [[ "${{ steps.run-throw-trigger-and-wait.outputs.run_conclusion }}" != "failure" ]]; then exit 1; fi
-
-          sleep 30
-
-      - name: "[7] (token) Run Timeout Trigger And Wait"
-        id: run-timeout-trigger-and-wait
-        uses: ./
-        with:
-          credentials: '{ "token": "${{ secrets.GH_TOKEN_WF_TRIGGER }}" }'
-          repo: ${{ github.repository }}
-          workflow_id: "test-workflow.yml"
-          ref: ${{ github.ref_name }}
-          inputs: '{"Timeout": "5"}'
-          wait_interval: "1000"
-          timeout: "3000"
-          action: "trigger-and-wait"
-          debug: "yes"
-          no_throw: "yes"
-
-      - name: "[7] (token) Verify Outputs"
-        run: |
-          echo "Run Conclusion: ${{ steps.run-timeout-trigger-and-wait.outputs.run_conclusion }}"
-          if [[ "${{ steps.run-timeout-trigger-and-wait.outputs.run_conclusion }}" != "timeout" ]]; then exit 1; fi
-
-          sleep 30
-
-      - name: "[8] (github-app) Run Simple Trigger And Wait (By Installation Id)"
-        id: run-app-trigger-and-wait
+      - name: "Should Pass Without Using Run Pattern"
+        id: test-simple
         uses: ./
         with:
           credentials: |
             {
               "app": {
-                "appId": "${{ secrets.GH_APP_ID }}",
-                "installationId": "${{ secrets.GH_APP_INSTALLATION_ID }}",
-                "privateKey": "${{ secrets.GH_APP_PRIVATE_KEY }}"
+                "appId": "${{ vars.GH_APP_WF_TRIGGER_ID }}",
+                "privateKey": "${{ secrets.GH_APP_WF_TRIGGER_KEY_BASE64 }}"
               }
             }
-          repo: ${{ github.repository }}
-          workflow_id: "test-workflow.yml"
-          ref: ${{ github.ref_name }}
-          inputs: '{"Timeout": "5"}'
-          wait_interval: "10000"
-          timeout: "60000"
+          repo: ${{ env.REPO }}
+          workflow_id: ${{ env.WORKFLOW_ID }}
+          ref: ${{ env.REF }}
+          inputs: '{"Timeout": "5", "RunPattern": "app-and-private-key-pattern-${{ github.run_id }}"}'
+          wait_interval: ${{ env.WAIT_INTERVAL }}
+          timeout: ${{ env.TIMEOUT }}
           action: "trigger-and-wait"
-          debug: "yes"
+          debug: ${{ env.DEBUG }}
+          run_pattern: "app-and-private-key-pattern-${{ github.run_id }}"
 
-      - name: "[8] (github-app) Verify Outputs"
+      - name: "Validate"
         run: |
-          echo "Run Conclusion: ${{ steps.run-app-trigger-and-wait.outputs.run_conclusion }}"
-          if [[ "${{ steps.run-app-trigger-and-wait.outputs.run_conclusion }}" != "success" ]]; then exit 1; fi
+          test "${{ steps.test-simple.outputs.run_conclusion }}" = "success"
 
-          sleep 30
+  # GitHub App-based testing (currently disabled)
+  integration-tests-app-and-env-key:
+    name: Triggering With App Id and Private Key (as env var)
+    runs-on: ubuntu-latest
+    needs:
+      - integration-tests-app-apd-private-key
+    strategy:
+      matrix:
+        test_case:
+          - name: "When Using only App Id and Private Key as Env Var"
+            credentials: |
+              {
+                "app": {
+                  "appId": "${{ vars.GH_APP_WF_TRIGGER_ID }}"
+                }
+              }
+            inputs: '{"Timeout": "5", "RunPattern": "app-only-pattern-${{ github.run_id }}"}'
+            wait_interval: "10s"
+            timeout: "10m"
+            run_pattern: "app-only-pattern-${{ github.run_id }}"
+          - name: "When Using App Id, Instalaltion Id and Private Key as Env Var"
+            credentials: |
+              {
+                "app": {
+                  "appId": "${{ vars.GH_APP_WF_TRIGGER_ID }}",
+                  "installationId": "${{ vars.GH_APP_WF_TRIGGER_INSTALLATION_ID }}"
+                }
+              }
+            inputs: '{"Timeout": "5", "RunPattern": "app-and-installation-pattern-${{ github.run_id }}"}'
+            wait_interval: "10s"
+            timeout: "10m"
+            run_pattern: "app-and-installation-pattern-${{ github.run_id }}"
+          - name: "When Using App Id, Owner and Private Key as Env Var"
+            credentials: |
+              {
+                "app": {
+                  "appId": "${{ vars.GH_APP_WF_TRIGGER_ID }}",
+                  "owner": "${{ github.repository_owner }}"
+                }
+              }
+            inputs: '{"Timeout": "5", "RunPattern": "app-and-owner-pattern-${{ github.run_id }}"}'
+            wait_interval: "10s"
+            timeout: "10m"
+            run_pattern: "app-and-owner-pattern-${{ github.run_id }}"
+          - name: "By Owner and Repo"
+            credentials: |
+              {
+                "app": {
+                  "appId": "${{ vars.GH_APP_WF_TRIGGER_ID }}",
+                  "owner": "${{ github.repository_owner }}",
+                  "repositories": ["workflow-trigger-wait"]
+                }
+              }
+            inputs: '{"Timeout": "5", "RunPattern": "app-owner-and-repo-pattern-${{ github.run_id }}"}'
+            wait_interval: "10s"
+            timeout: "10m"
+            run_pattern: "app-owner-and-repo-pattern-${{ github.run_id }}"
+          - name: "By Repo Only"
+            credentials: |
+              {
+                "app": {
+                  "appId": "${{ vars.GH_APP_WF_TRIGGER_ID }}",
+                  "repositories": ["workflow-trigger-wait"]
+                }
+              }
+            inputs: '{"Timeout": "5", "RunPattern": "app-and-repo-pattern-${{ github.run_id }}"}'
+            wait_interval: "10s"
+            timeout: "10m"
+            run_pattern: "app-and-repo-pattern-${{ github.run_id }}"
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-      - name: "[9a] (github-app) Run Simple Trigger And Wait (By Given Owner - Detecting Global InstallationId)"
-        id: run-app-owner-a-trigger-and-wait
+      - name: "Should Pass ${{ matrix.test_case.name }}"
+        id: test-github-app
         uses: ./
         with:
-          credentials: |
-            {
-              "app": {
-                "appId": "${{ secrets.GH_APP_ID }}",
-                "privateKey": "in-env",
-                "owner": "${{ github.repository_owner }}"
-              }
-            }
-          repo: ${{ github.repository }}
-          workflow_id: "test-workflow.yml"
-          ref: ${{ github.ref_name }}
-          inputs: '{"Timeout": "5"}'
-          wait_interval: "10000"
-          timeout: "60000"
+          credentials: ${{ matrix.test_case.credentials }}
+          repo: ${{ env.REPO }}
+          workflow_id: ${{ env.WORKFLOW_ID }}
+          ref: ${{ env.REF }}
+          inputs: ${{ matrix.test_case.inputs }}
+          wait_interval: ${{ matrix.test_case.wait_interval }}
+          timeout: ${{ matrix.test_case.timeout }}
           action: "trigger-and-wait"
-          debug: "yes"
+          debug: ${{ env.DEBUG }}
+          run_pattern: "${{ matrix.test_case.run_pattern }}"
         env:
-          GH_APP_PRIVATE_KEY: |
-            ${{ secrets.GH_APP_PRIVATE_KEY_RAW }}
+          GITHUB_APP_PRIVATE_KEY: ${{ secrets.GH_APP_WF_TRIGGER_KEY }}
 
-      - name: "[9a] (github-app) Verify Outputs"
+      - name: "Validate"
         run: |
-          echo "Run Conclusion: ${{ steps.run-app-owner-a-trigger-and-wait.outputs.run_conclusion }}"
-          if [[ "${{ steps.run-app-owner-a-trigger-and-wait.outputs.run_conclusion }}" != "success" ]]; then exit 1; fi
-
-          sleep 30
-
-      - name: "[9b] (github-app) Run Simple Trigger And Wait (By Given Owner - Detecting Global InstallationId)"
-        id: run-app-owner-b-trigger-and-wait
-        uses: ./
-        with:
-          credentials: |
-            {
-              "app": {
-                "appId": "${{ secrets.GH_APP_ID }}",
-                "privateKey": "in-env",
-                "owner": "${{ github.repository_owner }}"
-              }
-            }
-          repo: ${{ github.repository }}
-          workflow_id: "test-workflow.yml"
-          ref: ${{ github.ref_name }}
-          inputs: '{"Timeout": "5"}'
-          wait_interval: "10000"
-          timeout: "60000"
-          action: "trigger-and-wait"
-          debug: "yes"
-        env:
-          GITHUB_APP_PRIVATE_KEY: |
-            ${{ secrets.GH_APP_PRIVATE_KEY_RAW }}
-
-      - name: "[9b] (github-app) Verify Outputs"
-        run: |
-          echo "Run Conclusion: ${{ steps.run-app-owner-b-trigger-and-wait.outputs.run_conclusion }}"
-          if [[ "${{ steps.run-app-owner-b-trigger-and-wait.outputs.run_conclusion }}" != "success" ]]; then exit 1; fi
-
-          sleep 30
-
-      - name: "[10] (github-app) Run Simple Trigger And Wait (By Given Owner And Repo - Detecting By Repo InstallationId)"
-        id: run-app-owner-repo-trigger-and-wait
-        uses: ./
-        with:
-          credentials: |
-            {
-              "app": {
-                "appId": "${{ secrets.GH_APP_ID }}",
-                "privateKey": "${{ secrets.GH_APP_PRIVATE_KEY }}",
-                "owner": "${{ github.repository_owner }}",
-                "repositories": ["workflow-trigger-wait"]
-              }
-            }
-          repo: ${{ github.repository }}
-          workflow_id: "test-workflow.yml"
-          ref: ${{ github.ref_name }}
-          inputs: '{"Timeout": "5"}'
-          wait_interval: "10000"
-          timeout: "60000"
-          action: "trigger-and-wait"
-          debug: "yes"
-
-      - name: "[10] (github-app) Verify Outputs"
-        run: |
-          echo "Run Conclusion: ${{ steps.run-app-owner-repo-trigger-and-wait.outputs.run_conclusion }}"
-          if [[ "${{ steps.run-app-owner-repo-trigger-and-wait.outputs.run_conclusion }}" != "success" ]]; then exit 1; fi
-
-          sleep 30
-
-      - name: "[11] (github-app) Run Simple Trigger And Wait (By Given Repo - Detecting Owner and InstallationId)"
-        id: run-app-repo-trigger-and-wait
-        uses: ./
-        with:
-          credentials: |
-            {
-              "app": {
-                "appId": "${{ secrets.GH_APP_ID }}",
-                "privateKey": "${{ secrets.GH_APP_PRIVATE_KEY }}",
-                "repositories": ["workflow-trigger-wait"]
-              }
-            }
-          repo: ${{ github.repository }}
-          workflow_id: "test-workflow.yml"
-          ref: ${{ github.ref_name }}
-          inputs: '{"Timeout": "5"}'
-          wait_interval: "10000"
-          timeout: "60000"
-          action: "trigger-and-wait"
-          debug: "yes"
-
-      - name: "[11] (github-app) Verify Outputs"
-        run: |
-          echo "Run Conclusion: ${{ steps.run-app-repo-trigger-and-wait.outputs.run_conclusion }}"
-          if [[ "${{ steps.run-app-repo-trigger-and-wait.outputs.run_conclusion }}" != "success" ]]; then exit 1; fi
-
-          sleep 30
-
-      - name: "[12] (github-app) Run Simple Trigger And Wait (Detecting Owner, Repo and InstallationId)"
-        id: run-app-owner-repo-detect-trigger-and-wait
-        uses: ./
-        with:
-          credentials: |
-            {
-              "app": {
-                "appId": "${{ secrets.GH_APP_ID }}",
-                "privateKey": "${{ secrets.GH_APP_PRIVATE_KEY }}"
-              }
-            }
-          repo: ${{ github.repository }}
-          workflow_id: "test-workflow.yml"
-          ref: ${{ github.ref_name }}
-          inputs: '{"Timeout": "5"}'
-          wait_interval: "10000"
-          timeout: "60000"
-          action: "trigger-and-wait"
-          debug: "yes"
-
-      - name: "[12] (github-app) Verify Outputs"
-        run: |
-          echo "Run Conclusion: ${{ steps.run-app-owner-repo-detect-trigger-and-wait.outputs.run_conclusion }}"
-          if [[ "${{ steps.run-app-owner-repo-detect-trigger-and-wait.outputs.run_conclusion }}" != "success" ]]; then exit 1; fi
-
-          sleep 30
-
-      - name: "[13] (github-app) Run Simple Trigger And Wait (token regen)"
-        id: run-app-token-regen
-        uses: ./
-        with:
-          credentials: |
-            {
-              "app": {
-                "appId": "${{ secrets.GH_APP_ID }}",
-                "privateKey": "${{ secrets.GH_APP_PRIVATE_KEY }}",
-                "owner": "${{ github.repository_owner }}"
-              }
-            }
-          repo: ${{ github.repository }}
-          workflow_id: "test-workflow.yml"
-          ref: ${{ github.ref_name }}
-          inputs: '{"Timeout": "4000"}'
-          wait_interval: "10m"
-          timeout: "2h"
-          action: "trigger-and-wait"
-          debug: "yes"
-
-      - name: "[13] (github-app) Verify Outputs"
-        run: |
-          echo "Run Conclusion: ${{ steps.run-app-token-regen.outputs.run_conclusion }}"
-          if [[ "${{ steps.run-app-token-regen.outputs.run_conclusion }}" != "success" ]]; then exit 1; fi
-
-          sleep 30
+          test "${{ steps.test-github-app.outputs.run_conclusion }}" = "success"
 
   version-bump:
     name: Version Bump
     needs:
-      - unit-test-action
-      - workflow-test-action
+      - integration-tests-app-and-env-key
     if: ${{ ! contains(github.actor, '[bot]') }}
     runs-on: ubuntu-latest
     steps:
@@ -417,14 +325,14 @@ jobs:
       - name: Checkout repo (using token)
         uses: actions/checkout@v4
         with:
-          token: ${{ steps.app-token-push.outputs.token || secrets.GH_TOKEN_PUSH }}
+          token: ${{ steps.app-token-push.outputs.token }}
           fetch-depth: 0
 
       - name: Increase Version
         id: version_step
-        uses: ./
+        uses: dragoscops/bumpalicious@v2
         with:
-          github_token: ${{ secrets.GH_TOKEN_PUSH }}
+          github_token: ${{ steps.app-token-push.outputs.token }}
           workspaces: .:node
           branch: ${{ github.ref }}
           pr: true

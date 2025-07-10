@@ -1,7 +1,7 @@
 import * as core from '@actions/core';
 import parseDuration from 'parse-duration';
 
-import { errorMessage, InputError } from './utils.js';
+import {errorMessage, InputError} from './utils.js';
 
 export const actionTriggerAndWait = 'trigger-and-wait';
 export const actionTriggerOnly = 'trigger-only';
@@ -14,6 +14,7 @@ export type ActionType = (typeof actionTypes)[number];
 export type AppCredentials = {
   appId: string;
   privateKey: string;
+  privateKeyEnvVarName?: string;
   installationId?: string;
   owner?: string;
   repositories?: string[];
@@ -44,11 +45,11 @@ export type Options = {
 };
 
 export const defaultOptions: Options = {
-  credentials: { token: 'fake-token' },
+  credentials: {token: 'fake-token'},
   repo: 'owner/repo',
   workflowId: 'deploy.yml',
   ref: 'main',
-  inputs: { key: 'value' },
+  inputs: {key: 'value'},
   waitInterval: 500,
   timeout: 2000,
   action: actionTriggerAndWait,
@@ -93,12 +94,25 @@ export function processOptions() {
     throw new InputError(`Invalid JSON for credentials: ${errorMessage(error)}`);
   }
 
-  if (!credentials.token && !credentials.app) {
-    throw new InputError(`You must provide either a 'token' or 'app' in credentials.`);
+  if (credentials.app) {
+    if (!credentials.app.privateKey) {
+      credentials.app.privateKey = process.env[credentials.app.privateKeyEnvVarName ?? 'GITHUB_APP_PRIVATE_KEY'] || '';
+    } else {
+      credentials.app.privateKey = Buffer.from(credentials.app.privateKey, 'base64').toString('utf-8');
+    }
+    if (credentials.app.privateKey) {
+      credentials.app.privateKey = credentials.app.privateKey.trim().replace(/\\n/g, '\n');
+    }
+
+    console.log(credentials.app);
+
+    if (!credentials.app.appId || !credentials.app.privateKey) {
+      throw new InputError('Invalid Github App Credentials');
+    }
   }
 
-  if (credentials.app && (!credentials.app?.appId || !credentials.app?.privateKey)) {
-    throw new InputError('Invalid Github App credentials');
+  if (!credentials.app && !credentials.token) {
+    throw new InputError('You must provide a valid GitHub Token or valid Github App details in credentials.');
   }
 
   const options: Options = {
@@ -116,7 +130,7 @@ export function processOptions() {
     debug: core.getInput('debug') || 'no',
   };
 
-  const { action } = options;
+  const {action} = options;
 
   if (!actionTypes.includes(action)) {
     throw new InputError(`Invalid action: ${action}`);

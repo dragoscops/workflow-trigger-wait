@@ -64,14 +64,12 @@ export class GithubAxios {
     // Initialize Octokit with App authentication
     doDebug(this.options, '[createAppAuth]', {
       appId: Number(appId), // Ensure appId is a number
-      privateKey:
-        process.env.GITHUB_APP_PRIVATE_KEY || process.env.GH_APP_PRIVATE_KEY || privateKey.replace(/\\n*/g, '\n'),
+      privateKey,
       request,
     });
     const auth = createAppAuth({
       appId: Number(appId), // Ensure appId is a number
-      privateKey:
-        process.env.GITHUB_APP_PRIVATE_KEY || process.env.GH_APP_PRIVATE_KEY || privateKey.replace(/\\n*/g, '\n'),
+      privateKey,
       request,
     });
 
