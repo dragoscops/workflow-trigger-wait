@@ -3,10 +3,10 @@
 import '@actions/core';
 import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
-import {describe, it, expect, beforeEach, afterEach} from 'vitest';
-import {lastUncompletedRunAttempt, lastUncompletedRun} from './list-runs.js';
-import {defaultOptions} from '../../options.js';
-import {GithubApiUrl} from '../../github/api-url.js';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { lastUncompletedRunAttempt, lastUncompletedRun } from './list-runs.js';
+import { GithubApiUrl } from '../../github/api-url.js';
+import { defaultOptions } from '../../options.js';
 
 const internalServerError = 'Internal Server Error';
 
@@ -48,7 +48,7 @@ describe('list-runs', () => {
 
   describe('lastUncompletedRunAttempt', () => {
     it('should return a matching workflow run ID when runPattern matches the name', async () => {
-      const options = {...defaultOptions, runPattern: 'Production'};
+      const options = { ...defaultOptions, runPattern: 'Production' };
 
       // Mock GET response with workflow runs
       mock.onGet(mockRunsListUrl).reply(200, mockRunsListUrlResponse);
@@ -60,7 +60,7 @@ describe('list-runs', () => {
     });
 
     it('should return an empty string when runPattern does not match any run names', async () => {
-      const options = {...defaultOptions, runPattern: 'QA'};
+      const options = { ...defaultOptions, runPattern: 'QA' };
 
       // Mock GET response with workflow runs
       mock.onGet(mockRunsListUrl).reply(200, mockRunsListUrlResponse);
@@ -72,7 +72,7 @@ describe('list-runs', () => {
     });
 
     it('should correctly match runPattern using regex', async () => {
-      const options = {...defaultOptions, runPattern: '^Deploy to (Production|Staging)$'};
+      const options = { ...defaultOptions, runPattern: '^Deploy to (Production|Staging)$' };
 
       // Mock GET response with workflow runs
       mock.onGet(mockRunsListUrl).reply(200, mockRunsListUrlResponse);
@@ -83,7 +83,7 @@ describe('list-runs', () => {
     });
 
     it('should return an empty string if runPattern regex does not match any run names', async () => {
-      const options = {...defaultOptions, runPattern: '^Deploy to QA$'};
+      const options = { ...defaultOptions, runPattern: '^Deploy to QA$' };
 
       // Mock GET response with workflow runs
       mock.onGet(mockRunsListUrl).reply(200, mockRunsListUrlResponse);
@@ -115,7 +115,7 @@ describe('list-runs', () => {
 
     it('should throw an error if the request fails', async () => {
       // Mock GET request failure
-      mock.onGet(mockRunsListUrl).reply(500, {message: internalServerError});
+      mock.onGet(mockRunsListUrl).reply(500, { message: internalServerError });
 
       await expect(lastUncompletedRunAttempt(defaultOptions)).rejects.toThrow('Request failed with status code 500');
       expect(mock.history.get.length).toBe(1); // Ensure the GET request was made
@@ -156,7 +156,7 @@ describe('list-runs', () => {
 
     it('should throw an error if lastUncompletedRunAttempt fails', async () => {
       // Mock an error in one of the GET requests
-      mock.onGet(mockRunsListUrl).reply(500, {message: internalServerError});
+      mock.onGet(mockRunsListUrl).reply(500, { message: internalServerError });
 
       await expect(lastUncompletedRun(defaultOptions)).rejects.toThrow(
         'Failed to get workflow run ID: Request failed with status code 500',
@@ -173,7 +173,7 @@ describe('list-runs', () => {
       const startTime = Date.now();
       const runId = await lastUncompletedRun(defaultOptions);
       const elapsedTime = Date.now() - startTime;
-      const {pollingInterval} = defaultOptions.determineRunId!;
+      const { pollingInterval } = defaultOptions.determineRunId!;
 
       expect(runId).toBe('12345');
       expect(elapsedTime).toBeGreaterThanOrEqual(pollingInterval!); // Ensure at least one polling interval

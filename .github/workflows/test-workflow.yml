@@ -5,33 +5,33 @@ on:
   workflow_dispatch:
     inputs:
       Timeout:
-        description: 'Timeout for the action in minutes'
+        description: "Timeout for the action in minutes"
         required: true
-        default: '5'
+        default: "5"
         type: string
       Throw:
-        description: 'Throw error'
+        description: "Throw error"
         required: true
-        default: 'no'
+        default: "no"
         type: string
       RunPattern:
-        description: 'Run Pattern'
+        description: "Run Pattern"
         required: false
         type: string
   workflow_call:
     inputs:
       Timeout:
-        description: 'Timeout for the action in minutes'
+        description: "Timeout for the action in minutes"
         required: true
-        default: '5'
+        default: "5"
         type: string
       Throw:
-        description: 'Throw error'
+        description: "Throw error"
         required: true
-        default: 'no'
+        default: "no"
         type: string
       RunPattern:
-        description: 'Run Pattern'
+        description: "Run Pattern"
         required: false
         type: string
 
@@ -41,7 +41,13 @@ jobs:
 
     steps:
       - name: Test Step
-        run: echo "Test workflow started";
+        run: |
+          echo '{
+            "Timeout": "${{ inputs.Timeout }}",
+            "Throw": "${{ inputs.Throw }}",
+            "RunPattern": "${{ inputs.RunPattern }}"
+          }' | jq -r . | tee -a $GITHUB_STEP_SUMMARY
+          echo "Test workflow started";
           echo "Sleeping ${{ inputs.Timeout }} seconds";
           sleep ${{ inputs.Timeout }};
           if [[ "${{ inputs.Throw }}" == "yes" ]]; then

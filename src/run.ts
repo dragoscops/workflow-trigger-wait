@@ -1,8 +1,8 @@
 import * as core from '@actions/core';
-import {doDebug, Options, processOptions} from './options.js';
-import {silentFail, errorMessage, GenericError, InputError} from './utils.js';
-import {triggerWorkflow} from './workflow/trigger.js';
-import {waitForWorkflow} from './workflow/wait.js';
+import { doDebug, Options, processOptions } from './options.js';
+import { silentFail, errorMessage, GenericError, InputError } from './utils.js';
+import { triggerWorkflow } from './workflow/trigger.js';
+import { waitForWorkflow } from './workflow/wait.js';
 
 export default async function run(): Promise<void> {
   const options = processOptions();
@@ -11,7 +11,7 @@ export default async function run(): Promise<void> {
     await runAction(options);
     core.setOutput('run_conclusion', 'success'); // Explicitly mark as successful
   } catch (err) {
-    const conclusion = err instanceof GenericError ? err.runConclusion ?? 'unknown' : 'unknown';
+    const conclusion = err instanceof GenericError ? (err.runConclusion ?? 'unknown') : 'unknown';
 
     core.setOutput('run_conclusion', conclusion); // Always set the conclusion
     core.info(`Run Conclusion: ${conclusion}`);
@@ -26,7 +26,7 @@ export default async function run(): Promise<void> {
 }
 
 export async function runAction(options: Options) {
-  const {action} = options;
+  const { action } = options;
   if (action.includes('trigger')) {
     options.runId = await triggerWorkflow(options);
   }

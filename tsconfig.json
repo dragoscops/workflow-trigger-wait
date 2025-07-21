@@ -1,14 +1,18 @@
 {
   "extends": "@tsconfig/node20/tsconfig.json",
-  "files": ["./src/index.ts"],
+  "files": [
+    "./src/index.ts"
+  ],
   "compilerOptions": {
     "target": "ESNext",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "lib": ["ESNext", "DOM", "DOM.iterable"],
-
+    "lib": [
+      "ESNext",
+      "DOM",
+      "DOM.iterable"
+    ],
     "esModuleInterop": true,
-
     // Best practices
     "declaration": false,
     "declarationMap": false,
@@ -16,11 +20,9 @@
     "forceConsistentCasingInFileNames": true,
     "removeComments": true,
     "verbatimModuleSyntax": false,
-
     // Some stricter flags
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-
-    "outDir": "./dist"
+    "outDir": "./lib"
   }
 }

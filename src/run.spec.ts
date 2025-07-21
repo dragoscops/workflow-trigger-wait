@@ -1,11 +1,13 @@
 /* eslint-disable max-len */
 /* eslint-disable max-lines-per-function */
+/* eslint-disable vitest/no-commented-out-tests */
+
 import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
-import {describe, it, expect, beforeEach, afterEach} from 'vitest';
-import {GithubApiUrl} from './github/api-url.js';
-import {actionTriggerAndWait, defaultOptions, Options} from './options.js';
-import {runAction} from './run.js';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { GithubApiUrl } from './github/api-url.js';
+import { actionTriggerAndWait, defaultOptions, Options } from './options.js';
+import { runAction } from './run.js';
 
 // const internalServerError = 'Internal Server Error';
 
@@ -23,15 +25,15 @@ describe('runAction', () => {
   const githubApiUrl = GithubApiUrl.getInstance();
 
   it(`should trigger a workflow and wait when action is ${actionTriggerAndWait}`, async () => {
-    const options = {...defaultOptions, action: actionTriggerAndWait} as Options;
+    const options = { ...defaultOptions, action: actionTriggerAndWait } as Options;
     const workflowDispatchUrl = githubApiUrl.workflowDispatch(options);
-    const runStatusUrl = githubApiUrl.workflowRunStatus({...options, runId: '12345'});
+    const runStatusUrl = githubApiUrl.workflowRunStatus({ ...options, runId: '12345' });
     const runListUrl = githubApiUrl.runsList(options);
 
     // Mock workflow trigger API
     mock.onPost(workflowDispatchUrl).reply(204);
     // Mock polling for workflow run ID
-    mock.onGet(runListUrl).replyOnce(200, {workflow_runs: []}); // No run found
+    mock.onGet(runListUrl).replyOnce(200, { workflow_runs: [] }); // No run found
     mock.onGet(runListUrl).replyOnce(200, {
       workflow_runs: [
         {
@@ -40,14 +42,14 @@ describe('runAction', () => {
           path: options.workflowId,
           status: 'in_progress',
           config: {
-            data: JSON.stringify({ref: options.ref, inputs: options.inputs}),
+            data: JSON.stringify({ ref: options.ref, inputs: options.inputs }),
           },
         },
       ],
     });
     // Mock polling for workflow completion
-    mock.onGet(runStatusUrl).replyOnce(200, {status: 'in_progress'});
-    mock.onGet(runStatusUrl).replyOnce(200, {status: 'completed', conclusion: 'success'});
+    mock.onGet(runStatusUrl).replyOnce(200, { status: 'in_progress' });
+    mock.onGet(runStatusUrl).replyOnce(200, { status: 'completed', conclusion: 'success' });
 
     await expect(runAction(options)).resolves.toBeUndefined();
 

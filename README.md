@@ -2,7 +2,7 @@
 
 [![Build Status](https://github.com/dragoscops/workflow-trigger-wait/actions/workflows/ci.yml/badge.svg)](https://github.com/dragoscops/workflow-trigger-wait/actions/workflows/ci.yml)
 
-This GitHub Action facilitates triggering workflows in a different repository and optionally waiting for them to complete. It's designed to streamline the coordination of workflows across multiple repositories, enhancing automation and efficiency in your development processes.
+This Github action facilitates triggering workflows (in a different or the same repository) and optionally waiting for them to complete. It's designed to streamline the coordination of workflows across multiple repositories, enhancing automation and efficiency in your development processes.
 
 - [GitHub Action: Workflow Trigger and Wait](#github-action-workflow-trigger-and-wait)
   - [Features](#features)
@@ -30,6 +30,7 @@ This GitHub Action facilitates triggering workflows in a different repository an
 
 - **Trigger Workflows:** Initiate workflows in a target repository seamlessly.
 - **Wait for Completion:** Optionally wait for workflows to complete with customizable polling intervals and timeouts.
+- **Enhanced GitHub App Authentication:** Multiple workarounds for the JSON/PEM incompatibility issue - supports base64-encoded keys and environment variables.
 - **Flexible Modes of Operation:**
   - `trigger-and-wait` (default): Triggers the workflow and waits for it to complete.
   - `trigger-only`: Triggers the workflow without waiting for its completion.
@@ -93,39 +94,73 @@ This GitHub Action facilitates triggering workflows in a different repository an
 
 ##### Credentials: GitHub App
 
-| Name             | Required | Default | Description                                             |
-|------------------|----------|---------|---------------------------------------------------------|
-| `appId`          | **Yes**  | N/A     | GitHub App ID                                           |
-| `privateKey`     | **Yes**  | N/A     | GitHub App Private Key                                  |
-| `installationId` | No       | N/A     | Installation ID for the GitHub App                      |
-| `owner`          | No       | N/A     | Owner of the GitHub App                                 |
-| `repositories`   | No       | N/A     | List of repositories the GitHub App has access to       |
+| Name                | Required | Default                 | Description                                             |
+|---------------------|----------|-------------------------|---------------------------------------------------------|
+| `appId`             | **Yes**  | N/A                     | GitHub App ID                                           |
+| `privateKey`        | No  | N/A                     | GitHub Base64 encoded App Private Key |
+| `privateKeyEnvVarName` | No    | `GITHUB_APP_PRIVATE_KEY` | Environment variable name containing the raw PEM private key (used when `privateKey` is not provided as base64 encoded) |
+| `installationId`    | No       | N/A                     | Installation ID for the GitHub App                      |
+| `owner`             | No       | N/A                     | Owner of the GitHub App                                 |
+| `repositories`      | No       | N/A                     | List of repositories the GitHub App has access to       |
 
 > **Note**
-> Since `credentials` is a JSON string, the `privateKey` **cannot** be provided as a PEM in raw format. To pass the private key correctly, join the PEM lines using `\\n` or provide it through the `GH_APP_PRIVATE_KEY` environment variable.
+> Since `credentials` is a JSON string, GitHub Actions private keys (which contain actual newlines) **cannot** be directly included in JSON. This action provides two workarounds:
+> 
+> 1. **Base64-encode the private key** - The action automatically detects and decodes base64-encoded keys
+> 2. **Use environment variables** - Do not provide `privateKey` and store the raw PEM key in `GITHUB_APP_PRIVATE_KEY` environment variable (or mention the name of the environment variable under `privateKeyEnvVarName`)
 
-- **Example of Joining PEM Lines:**
+- **Example 1: Base64-Encoded Private Key (Recommended)**
 
-  ```javascript
-  console.log(require("fs").readFileSync("/path/to/key.pem").toString().replace(/\n/g, "\\n"));
+  First, encode your private key:
+  ```bash
+  base64 -i /path/to/your/private-key.pem | tr -d '\n'
   ```
-
-- **Example Using Environment Variable:**
-
+  
+  Then use it in your workflow:
   ```yaml
   - name: Trigger and Wait for Workflow
-    uses: dragoscops/workflow-trigger-wait@v3
+    uses: dragoscops/workflow-trigger-wait@v3.1
     with:
       credentials: |
         {
           "appId": "${{ vars.GH_APP_ID }}",
-          "privateKey": "empty",
+          "privateKey": "${{ secrets.GH_APP_PRIVATE_KEY_BASE64 }}",
+          "owner": "dragoscops"
+        }
+      ...
+  ```
+
+- **Example 2: Using Environment Variable (Cleanest)**
+
+  ```yaml
+  - name: Trigger and Wait for Workflow
+    uses: dragoscops/workflow-trigger-wait@v3.1
+    with:
+      credentials: |
+        {
+          "appId": "${{ vars.GH_APP_ID }}",
           "owner": "dragoscops"
         }
       ...
     env:
-      GH_APP_PRIVATE_KEY: |
-        ${{ secrets.GH_APP_PRIVATE_KEY_RAW }}
+      GITHUB_APP_PRIVATE_KEY: ${{ secrets.GH_APP_PRIVATE_KEY_RAW }}
+  ```
+
+- **Example 3: Custom Environment Variable Name**
+
+  ```yaml
+  - name: Trigger and Wait for Workflow
+    uses: dragoscops/workflow-trigger-wait@v3.1
+    with:
+      credentials: |
+        {
+          "appId": "${{ vars.GH_APP_ID }}",
+          "privateKeyEnvVarName": "MY_CUSTOM_PRIVATE_KEY",
+          "owner": "dragoscops"
+        }
+      ...
+    env:
+      MY_CUSTOM_PRIVATE_KEY: ${{ secrets.MY_CUSTOM_PRIVATE_KEY }}
   ```
 
 If `installationId` is not specified, the action will look for `owner`. If `owner` is not specified, the action will extract it from the `GITHUB_REPOSITORY` environment variable. Similarly, if `repositories` is not mentioned, it will default to the repository extracted from the `GITHUB_REPOSITORY` environment variable.
@@ -137,6 +172,7 @@ Ensure that sensitive information such as `token`, `appId`, `privateKey`, and `i
 | Name             | Description                                                                 |
 |------------------|-----------------------------------------------------------------------------|
 | `run_id`         | The workflow run ID of the triggered workflow.                              |
+| `run_url`        | The URL of the triggered workflow run.                                      |
 | `run_conclusion` | The conclusion of the workflow run (`success`, `failure`, `timed_out`, etc.). |
 
 ## Example Workflows
@@ -156,7 +192,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Trigger and Wait for Workflow
-        uses: dragoscops/workflow-trigger-wait@v3
+        uses: dragoscops/workflow-trigger-wait@v3.1
         with:
           credentials: |
             {
@@ -186,7 +222,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Trigger and Wait for Workflow Run Matching Pattern
-        uses: dragoscops/workflow-trigger-wait@v3
+        uses: dragoscops/workflow-trigger-wait@v3.1
         with:
           credentials: |
             {
@@ -204,6 +240,27 @@ jobs:
 
 In this example, the action will trigger the specified workflow and wait for a workflow run whose name matches the regular expression `^Deploy to Production$`.
 
+```yaml
+name: Target Workflow
+run-name: 'Deploying to ${{ inputs.environment }}'
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'staging'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy to Production  # This run-name matches the pattern "^Deploy to Production$"
+    steps:
+      - name: Deploy
+        run: echo "Deploying to ${{ inputs.environment }}"
+```
+
 ### Trigger Using GitHub App
 
 #### Using `privateKey`:
@@ -212,7 +269,7 @@ Provides the GitHub App's private key directly within the `credentials` JSON.
 
 ```yaml
 - name: Trigger and Wait for Workflow
-  uses: dragoscops/workflow-trigger-wait@v3
+  uses: dragoscops/workflow-trigger-wait@v3.1
   with:
     credentials: |
       {
@@ -229,20 +286,17 @@ Provides the GitHub App's private key directly within the `credentials` JSON.
     action: "trigger-and-wait"
 ```
 
-**Note:** Ensure that the `privateKey` is correctly formatted by joining PEM lines with `\\n` if necessary.
-
 #### Using `GH_APP_PRIVATE_KEY` Environment Variable:
 
 Stores the GitHub App's private key securely as an environment variable and references it in the `credentials` JSON.
 
 ```yaml
 - name: Trigger and Wait for Workflow
-  uses: dragoscops/workflow-trigger-wait@v3
+  uses: dragoscops/workflow-trigger-wait@v3.1
   with:
     credentials: |
       {
         "appId": "${{ vars.GH_APP_ID }}",
-        "privateKey": "empty",
         "owner": "dragoscops"
       }
     repo: "owner/target-repo"
@@ -273,7 +327,7 @@ jobs:
     steps:
       - name: Trigger Workflow
         id: trigger
-        uses: dragoscops/workflow-trigger-wait@v3
+        uses: dragoscops/workflow-trigger-wait@v3.1
         with:
           credentials: |
             {
@@ -288,7 +342,7 @@ jobs:
       # Additional actions can be performed here before waiting
 
       - name: Wait for Workflow Completion
-        uses: dragoscops/workflow-trigger-wait@v3
+        uses: dragoscops/workflow-trigger-wait@v3.1
         with:
           credentials: |
             {
