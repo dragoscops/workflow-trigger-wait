@@ -1,7 +1,9 @@
 {
+  "name": "@templ-project/workflow-trigger-wait",
   "main": "dist/index.js",
   "type": "module",
   "license": "MIT",
+  "version": "3.1.0",
   "scripts": {
     "audit-modules": "echo npm audit",
     "build:ncc": "ncc build lib/index.js -o dist --target es2020",
